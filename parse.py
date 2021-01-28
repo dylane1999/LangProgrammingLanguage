@@ -37,8 +37,10 @@ class Parser:
             return self.__parse_parenthesis(string, index)
         elif term == "space":
             return self.__parse_spaces(string, index)
-        elif term == "arithmetic":
-            return self.__parse_arithmetic_expression(string, index)
+        elif term == "add|sub":
+            return self.__parse_add_sub_expression(string, index)
+        elif term == "mult|div":
+            return self.__parse_mult_div_expression(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -75,7 +77,7 @@ class Parser:
             return self.FAIL
         return Parse(parsed, index)
 
-    def __parse_addition_expression(self, string, index):
+    def __parse_addition_expression(self, string, index): #  @todo add a parse for mult and div expression before and after
         parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
         if parse != self.FAIL:
             index = parse.index
@@ -119,22 +121,30 @@ class Parser:
             index = parse.index
         return Parse(result, index)
 
-    def __parse_arithmetic_expression(self, string, index):  # addition & subtraction function
+    def __parse_add_sub_expression(self, string, index):  # addition & subtraction function
+        '''
+        add_sub_expression   = mul_div_expression ( opt_space add_sub_operator opt_space mul_div_expression )*;
+
+        :param string:
+        :param index:
+        :return: Parse of add|sub expression
+        '''
         parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
         if parse != self.FAIL:
             index = parse.index
         result = 0
-        parse = self.__parse(string, index, "operand")  # parses the expression starting at the index given
+        # parse = self.__parse(string, index, "operand")  # parses the expression starting at the index given @FIXME change to become multdiv experssion
+        parse = self.__parse(string, index, "mult|div")  # parses the mult expression (if no expression returns int
         if parse == self.FAIL:
             return self.FAIL
         result = parse.value
         index = parse.index
-        options = {"-": "-", "+": "+"}
         while index < len(string) and parse != self.FAIL:
-            if string[index] != "-" and string[index] != "+":  # parse + and if not then fail
+            if string[index] != "-" and string[index] != "+":  # parse +|- and if not then fail
                 parse = self.FAIL
                 break
-            parse = self.__parse(string, parse.index + 1, "operand")  # parse the next operand; jumps +1 because of "+ / -"
+            # parse = self.__parse(string, parse.index + 1, "operand")  # parse the next operand; jumps +1 because of "+ / -"
+            parse = self.__parse(string, parse.index + 1, "mult|div")  # parses the mult expression (if no expression returns int); jumps +1 because of the " +/-"
             if parse == self.FAIL:      # if operand was fail break
                 parse = self.FAIL
                 break
@@ -142,17 +152,53 @@ class Parser:
                 result += parse.value
             if string[index] == "-":        # if the operation was subtraction  -
                 result -= parse.value
-            # result += parse.value
             index = parse.index
         return Parse(result, index)
 
-    def __parse_parenthesis(self, string, index):
+    def __parse_mult_div_expression(self, string, index):  # parse multiplication and division
+        '''
+        mul_div_expression       = operand ( opt_space mul_div_operator opt_space operand )*;
+
+        :param string:
+        :param index:
+        :return: Parse of mult|div expression
+        '''
+        parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
+        if parse != self.FAIL:
+            index = parse.index
+        parse = self.__parse(string, index, "operand")  # parses the int at start of expression
+        if parse == self.FAIL:
+            return self.FAIL
+        result = parse.value    # if not fail add result & index
+        index = parse.index
+        while index < len(string) and parse != self.FAIL:
+            if string[index] != "*" and string[index] != "/":  # parse *|/ and if not then fail
+                parse = self.FAIL
+                break
+            parse = self.__parse(string, parse.index + 1, "operand")  # parse the next operand; jumps +1 because of "* | /"
+            if parse == self.FAIL:      # if operand was fail break
+                parse = self.FAIL
+                break
+            if string[index] == "*":        # if the operation was mult *
+                result *= parse.value
+            if string[index] == "/":        # if the operation was divide  @FIXME cahnge to int division
+                result //= parse.value
+            index = parse.index
+        return Parse(result, index)
+
+    def __parse_parenthesis(self, string, index): # @todo add a parse for mult and div
+        '''
+
+        :param string:
+        :param index:
+        :return: Parsed parenthesized expression
+        '''
         parse = self.__parse(string, index, "space")  # checks for spaces at start of parenthesis and adds to index
         if parse != self.FAIL:
             index = parse.index     # if parse of spaces was success add to index
         if string[index] != '(':        # check if the string starts with open parenthesis
             return self.FAIL
-        parse = self.__parse(string, index + 1, "arithmetic")     # parses the addition string inside the parenthesis @todo turn to arithmetic instead of addition
+        parse = self.__parse(string, index + 1, "add|sub")     # parses the addition string inside the parenthesis
         if parse == self.FAIL:        # if addition is not in grammar fails
             return self.FAIL
         if string[parse.index] != ")": # checks char at end of addition string, if not a close paren, then fail
@@ -213,44 +259,59 @@ class Parser:
         test_parse(parser, "3 + + ", "addition", Parse(3, 2))
         test_parse(parser, "3+    4       + (5   +   5  +     9)  ", "addition", Parse(26, 38))  # the addition fails leading to a fail in index length
         # #subtraction test
-        test_parse(parser, "5-3", "arithmetic", Parse(2, 3))
-        test_parse(parser, "3-5", "arithmetic", Parse(-2, 3))
-        test_parse(parser, "(5-6)-9", "arithmetic", Parse(-10, 7))
-        test_parse(parser, " (5-6)-9 ", "arithmetic", Parse(-10, 9))
-        test_parse(parser, " (5-6) -9 ", "arithmetic", Parse(-10, 10))
+        test_parse(parser, "5-3", "add|sub", Parse(2, 3))
+        test_parse(parser, "3-5", "add|sub", Parse(-2, 3))
+        test_parse(parser, "(5-6)-9", "add|sub", Parse(-10, 7))
+        test_parse(parser, " (5-6)-9 ", "add|sub", Parse(-10, 9))
+        test_parse(parser, " (5-6) -9 ", "add|sub", Parse(-10, 10))
 
         # retry addition as artithmetic
-        test_parse(parser, "b", "arithmetic", self.FAIL)
-        test_parse(parser, "", "arithmetic", self.FAIL)
-        test_parse(parser, "3-", "arithmetic", Parse(3,1))
-        test_parse(parser, "3++", "arithmetic", Parse(3,1))
-        test_parse(parser, "3+4", "arithmetic", Parse(7, 3))
-        test_parse(parser, "2020+2021", "arithmetic", Parse(4041, 9))
-        test_parse(parser, "0+0", "arithmetic", Parse(0, 3))
-        test_parse(parser, "1+1+", "arithmetic", Parse(2, 3))
-        test_parse(parser, "1+1+-", "arithmetic", Parse(2, 3))
-        test_parse(parser, "0+0+0+0+0", "arithmetic", Parse(0, 9))
-        test_parse(parser, "42+0", "arithmetic", Parse(42, 4))
-        test_parse(parser, "40+42", "arithmetic", Parse(82, 5))
-        test_parse(parser, "123+234+456", "arithmetic", Parse(813, 11))
+        test_parse(parser, "b", "add|sub", self.FAIL)
+        test_parse(parser, "", "add|sub", self.FAIL)
+        test_parse(parser, "3-", "add|sub", Parse(3,1))
+        test_parse(parser, "3++", "add|sub", Parse(3,1))
+        test_parse(parser, "3+4", "add|sub", Parse(7, 3))
+        test_parse(parser, "2020+2021", "add|sub", Parse(4041, 9))
+        test_parse(parser, "0+0", "add|sub", Parse(0, 3))
+        test_parse(parser, "1+1+", "add|sub", Parse(2, 3))
+        test_parse(parser, "1+1+-", "add|sub", Parse(2, 3))
+        test_parse(parser, "0+0+0+0+0", "add|sub", Parse(0, 9))
+        test_parse(parser, "42+0", "add|sub", Parse(42, 4))
+        test_parse(parser, "40+42", "add|sub", Parse(82, 5))
+        test_parse(parser, "123+234+456", "add|sub", Parse(813, 11))
         # parenthesis test cases
         test_parse(parser, "(0)", "parenthesis", Parse(0, 3))
         test_parse(parser, "(0+0)", "parenthesis", Parse(0, 5))
         test_parse(parser, "(1+2)", "parenthesis", Parse(3, 5))
         test_parse(parser, "(1+2+3)", "parenthesis", Parse(6, 7))
-        test_parse(parser, "4+(1+2+3)", "arithmetic", Parse(10, 9))
-        test_parse(parser, "(1+2+3)+5", "arithmetic", Parse(11, 9))
-        test_parse(parser, "4+(1+2+3)+5", "arithmetic", Parse(15, 11))
-        test_parse(parser, "3+4+(5+6)+9", "arithmetic", Parse(27, 11))
+        test_parse(parser, "4+(1+2+3)", "add|sub", Parse(10, 9))
+        test_parse(parser, "(1+2+3)+5", "add|sub", Parse(11, 9))
+        test_parse(parser, "4+(1+2+3)+5", "add|sub", Parse(15, 11))
+        test_parse(parser, "3+4+(5+6)+9", "add|sub", Parse(27, 11))
 
         # end to end test
         test_parse(parser, "(3+4)+((2+3)+0+(1+2+3))+9", "addition", Parse(27, 25))
 
         # addition and subtraction test
-        test_parse(parser, "3-5+1", "arithmetic", Parse(-1, 5))
-        test_parse(parser, "(5+7)-6+2", "arithmetic", Parse(8, 9))
-        test_parse(parser, "(  5+7)-6+  2", "arithmetic", Parse(8, 13))
-        test_parse(parser, "(5+(4+5))", "parenthesis", Parse(8, 13))
+        test_parse(parser, "3-5+1", "add|sub", Parse(-1, 5))
+        test_parse(parser, "(5+7)-6+2", "add|sub", Parse(8, 9))
+        test_parse(parser, "(  5+7)-6+  2", "add|sub", Parse(8, 13))
+        test_parse(parser, "(5+(4+5))", "parenthesis", Parse(14, 9))
+        test_parse(parser, "5*5", "mult|div", Parse(25, 3))
+        test_parse(parser, "1   *  17   ", "mult|div", Parse(17, 12))
+        test_parse(parser, "5*10*2", "mult|div", Parse(100, 6))
+        test_parse(parser, "5/5", "mult|div", Parse(1, 3))
+        test_parse(parser, "5+5/5", "add|sub", Parse(6, 5))
+        test_parse(parser, "5*5/5", "mult|div", Parse(5, 5))
+        test_parse(parser, "(5/5)", "mult|div", Parse(1, 5))
+        test_parse(parser, "3+5+(5*5)", "add|sub", Parse(33, 9))
+
+
+
+        '''
+        ask justin more about how to parse mult div and addition together should it be one function - I was confused on how to read the info in the grammar posted on moodle can you go over that please 
+        '''
+
 
 
 
