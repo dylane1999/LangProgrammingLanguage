@@ -133,7 +133,6 @@ class Parser:
         if parse != self.FAIL:
             index = parse.index
         result = 0
-        # parse = self.__parse(string, index, "operand")  # parses the expression starting at the index given @FIXME change to become multdiv experssion
         parse = self.__parse(string, index, "mult|div")  # parses the mult expression (if no expression returns int
         if parse == self.FAIL:
             return self.FAIL
@@ -143,7 +142,6 @@ class Parser:
             if string[index] != "-" and string[index] != "+":  # parse +|- and if not then fail
                 parse = self.FAIL
                 break
-            # parse = self.__parse(string, parse.index + 1, "operand")  # parse the next operand; jumps +1 because of "+ / -"
             parse = self.__parse(string, parse.index + 1, "mult|div")  # parses the mult expression (if no expression returns int); jumps +1 because of the " +/-"
             if parse == self.FAIL:      # if operand was fail break
                 parse = self.FAIL
@@ -305,6 +303,7 @@ class Parser:
         test_parse(parser, "5*5/5", "mult|div", Parse(5, 5))
         test_parse(parser, "(5/5)", "mult|div", Parse(1, 5))
         test_parse(parser, "3+5+(5*5)", "add|sub", Parse(33, 9))
+        test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
 
 
