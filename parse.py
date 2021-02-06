@@ -161,7 +161,7 @@ class Parser:
                 parse = self.FAIL
                 break
             # parses the mult expression (if no expression returns int); jumps +1 because of the " +/-"
-            right_parse = self.__parse(string, left_parse.index + 1,"mult|div")
+            right_parse = self.__parse(string, left_parse.index + 1,"mult|div")  # use left parse index (parent)
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
@@ -170,13 +170,13 @@ class Parser:
                 parent.children.append(right_parse) # add right/left parse
                 parent.children.append(left_parse)
                 left_parse = parent  # set left parse to parent
-                pass
+
             if string[index] == "-":  # if the operation was subtraction  -
                 parent = StatementParse(right_parse.index, "-")
                 parent.children.append(right_parse) # add right/left parse
                 parent.children.append(left_parse)
                 left_parse = parent  # set left parse to parent
-            index = right_parse.index
+            index = right_parse.index  # set index to right parse index
         return parent  # return the root level parent
 
     def __parse_mult_div_expression(self, string, index):  # parse multiplication and division
@@ -189,25 +189,32 @@ class Parser:
         space_parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
         if space_parse != self.FAIL:
             index = space_parse.index
-        parse = self.__parse(string, index, "operand")  # parses the int at start of expression
-        if parse == self.FAIL:
+        left_parse = self.__parse(string, index, "operand")  # parses the int at start of expression
+        if left_parse == self.FAIL:
             return self.FAIL
-        result = parse.value  # if not fail add result & index
-        index = parse.index
+        index = left_parse.index  # if not fail add result & index
+        parent = None  # declare parent
+        parse = None  # declare parse to fail test
         while index < len(string) and parse != self.FAIL:
             if string[index] != "*" and string[index] != "/":  # parse *|/ and if not then fail
                 parse = self.FAIL
                 break
-            parse = self.__parse(string, parse.index + 1,"operand")  # parse next operand; jumps +1 because of "* | /"
-            if parse == self.FAIL:  # if operand was fail break
+            right_parse = self.__parse(string, left_parse.index + 1,"operand")  # parse next operand; index +1 for "* | /"
+            if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
             if string[index] == "*":  # if the operation was mult *
-                result *= parse.value
+                parent = StatementParse(right_parse.index, "*")
+                parent.children.append(right_parse) # add right/left parse
+                parent.children.append(left_parse)
+                left_parse = parent  # set left parse to parent
             if string[index] == "/":  # if the operation was divide  @FIXME cahnge to int division
-                result //= parse.value
-            index = parse.index
-        return Parse(result, index)
+                parent = StatementParse(right_parse.index, "/")
+                parent.children.append(right_parse)  # add right/left parse
+                parent.children.append(left_parse)
+                left_parse = parent  # set left parse to parent
+            index = right_parse.index  # set index to right parse index
+        return parent
 
     def __parse_parenthesis(self, string, index):  # @todo add a parse for mult and div
         '''
@@ -215,7 +222,7 @@ class Parser:
         :param index:
         :return: Parsed parenthesized expression
         '''
-        space_parse = self.__parse(string, index, "space")  # checks for spaces at start of parenthesis and adds to index
+        space_parse = self.__parse(string, index, "space")  # checks for space at start of parenthesis and adds to index
         if space_parse != self.FAIL:
             index = space_parse.index  # if parse of spaces was success add to index
         if string[index] != '(':  # check if the string starts with open parenthesis
@@ -225,7 +232,7 @@ class Parser:
             return self.FAIL
         if string[parse.index] != ")":  # checks char at end of addition string, if not a close paren, then fail
             return self.FAIL
-        space_parse = self.__parse(string, parse.index + 1,"space")  # checks for spaces at end of parenthesis and adds to index
+        space_parse = self.__parse(string, parse.index + 1,"space")  # checks for space at end and adds to index
         if space_parse != self.FAIL:  # if spaces return with spaces index
             return Parse(parse.value, space_parse.index)
         return Parse(parse.value, parse.index + 1)  # add one index to account for close paren
@@ -298,7 +305,9 @@ class Parser:
         # test_parse(parser, "0+0+0+0+0", "add|sub", Parse(0, 9))
         # test_parse(parser, "42+0", "add|sub", Parse(42, 4))
         # test_parse(parser, "40+42", "add|sub", Parse(82, 5))
-        test_parse(parser, "123+234+456", "add|sub", Parse(813, 11))
+        # test_parse(parser, "123+234+456", "add|sub", Parse(813, 11))
+        # test_parse(parser, "5*234*456", "mult|div", Parse(813, 11))
+
         # # parenthesis test cases
         # test_parse(parser, "(0)", "parenthesis", Parse(0, 3))
         # test_parse(parser, "(0+0)", "parenthesis", Parse(0, 5))
@@ -319,7 +328,7 @@ class Parser:
         # test_parse(parser, "(5+(4+5))", "parenthesis", Parse(14, 9))
         # test_parse(parser, "5*5", "mult|div", Parse(25, 3))
         # test_parse(parser, "1   *  17   ", "mult|div", Parse(17, 12))
-        # test_parse(parser, "5*10*2", "mult|div", Parse(100, 6))
+        test_parse(parser, "5*10*2", "mult|div", Parse(100, 6))
         # test_parse(parser, "5/5", "mult|div", Parse(1, 3))
         # test_parse(parser, "5+5/5", "add|sub", Parse(6, 5))
         # test_parse(parser, "5*5/5", "mult|div", Parse(5, 5))
