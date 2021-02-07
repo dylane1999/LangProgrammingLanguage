@@ -68,6 +68,8 @@ class Parser:
             return self.__parse_parenthesis(string, index)
         elif term == "op_space":
             return self.__parse_optional_spaces(string, index)
+        elif term == "req_space":
+            return self.__parse_required_space(string, index)
         elif term == "space":
             return self.__parse_space(string, index)
         elif term == "comment":
@@ -78,6 +80,14 @@ class Parser:
             return self.__parse_add_sub_expression(string, index)
         elif term == "mult|div":
             return self.__parse_mult_div_expression(string, index)
+        elif term == "program":
+            return self.__parse_program(string, index)
+        elif term == "statement":
+            return self.__parse_statement(string, index)
+        elif term == "expression":
+            return self.__parse_expression(string, index)
+        elif term == "print_statement":
+            return self.__parse_print_statement(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -135,11 +145,13 @@ class Parser:
             return self.FAIL
         return Parse(parsed, index)
 
-    # @todo in the _parse op space funct - after the __parse_space add the paresed from that parse to the parsed for the larger parsed in __parse_op_space
-    # else return fail
 
     def __parse_required_space(self, string, index):
-        pass
+        parse = self.__parse(string, index, "op_space")
+        if parse.value == " " or parse.value == "\n":
+            return parse
+        return self.FAIL
+
 
     def __parse_comment(self, string, index):
         parsed = ""
@@ -274,6 +286,40 @@ class Parser:
         parse.index +=1
         return parse # add one index to account for close parent \ return statement parse
 
+    def __parse_program(self, string, index):
+        pass
+
+    def __parse_statement(self, string, index):
+        pass
+
+    def __parse_expression(self, string, index):
+        parse = self.__parse(string, index, "add|sub")
+        if parse == self.FAIL:
+            return self.FAIL
+        return parse
+
+    def __parse_print_statement(self, string, index):
+        print = string[0:5]  # check for print
+        if print != "print":
+            return self.FAIL
+        index += 5  # skip to end of print
+        parse = self.__parse(string, index, "req_space")  # parse the required one space or newline
+        if parse == self.FAIL:
+            return self.FAIL
+        expression_parse = self.__parse(string, index, "expression")  # parse for the expression
+        if expression_parse == self.FAIL:
+            return self.FAIL
+        index = expression_parse.index  # set index to end of expression
+        space_parse = self.__parse(string, index, "op_space")
+        if space_parse != self.FAIL:  # if optional space, add to index
+            index = space_parse.index
+        if string[index] != ";":  # check for the ; end char
+            return self.FAIL
+        print_statement = StatementParse(index, "print")
+        print_statement.children.append(expression_parse)
+        return print_statement
+
+
 
     def test(self):
         parser = Parser()
@@ -281,8 +327,9 @@ class Parser:
         # term = parser.parse("2+2*2", "add|sub")
         # print(term.to_string())
         # term = parser.parse("    2*     2+2", "add|sub")
-        term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
-        print(term.to_string())
+        # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
+        term = parser.parse("print 2+2*2;", "print_statement")
+        # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
 
