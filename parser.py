@@ -66,8 +66,14 @@ class Parser:
             return self.__parse_operand(string, index)
         elif term == "parenthesis":
             return self.__parse_parenthesis(string, index)
+        elif term == "op_space":
+            return self.__parse_optional_spaces(string, index)
         elif term == "space":
-            return self.__parse_spaces(string, index)
+            return self.__parse_space(string, index)
+        elif term == "comment":
+            return self.__parse_comment(string, index)
+        elif term == "newline":
+            return self.__parse_newline(string, index)
         elif term == "add|sub":
             return self.__parse_add_sub_expression(string, index)
         elif term == "mult|div":
@@ -85,7 +91,7 @@ class Parser:
         return self.FAIL  # may need to add index here to return
 
     def __parse_integer(self, string, index):
-        parse = self.__parse(string, index, "space")  # checks for spaces at start of integer and adds to index
+        parse = self.__parse(string, index, "op_space")  # checks for spaces at start of integer and adds to index
         if parse != self.FAIL:
             index = parse.index  # if parse of spaces was success add to index
         parsed = ""
@@ -94,14 +100,70 @@ class Parser:
             index += 1
         if parsed == '':
             return self.FAIL
-        parse = self.__parse(string, index, "space")  # checks for spaces at end of integer and adds to index
+        parse = self.__parse(string, index, "op_space")  # checks for spaces at end of integer and adds to index
         if parse != self.FAIL:
             index = parse.index  # if parse of spaces was success add to index
         return IntergerParse(int(parsed), index)  # returns the parsed int
 
-    def __parse_spaces(self, string, index):
+    def __parse_optional_spaces(self, string, index):
         parsed = ""
-        while index < len(string) and string[index] == " ":  # loops through and adds to parsed while still a digit
+        # loops through and adds to parsed while still a digit
+        while index < len(string) and (string[index] == " " or string[index] == "\n" or string[index] == "#"):
+
+            if index < len(string) and string[index] == " ":  # parse for spaces
+                parse = self.__parse(string, index, "space")
+                if parse == self.FAIL:
+                    return self.FAIL
+                parsed += parse.value  # add parsed space
+                index = parse.index  # set index to index of after the space
+
+            if index < len(string) and string[index] == "\n":  # parse for newline
+                parse = self.__parse(string, index, "newline")
+                if parse == self.FAIL:
+                    return self.FAIL
+                parsed += parse.value  # add parsed newline
+                index = parse.index  # set index to index of after the newline
+
+            if index < len(string) and string[index] == "#":  # parse for comment
+                parse = self.__parse(string, index, "comment")
+                if parse == self.FAIL:
+                    return self.FAIL
+                parsed += parse.value  # add parsed comment
+                index = parse.index  # set index to index of after the comment
+
+        if parsed == "":  # if nothing was parsed fail
+            return self.FAIL
+        return Parse(parsed, index)
+
+    # @todo in the _parse op space funct - after the __parse_space add the paresed from that parse to the parsed for the larger parsed in __parse_op_space
+    # else return fail
+
+    def __parse_required_space(self, string, index):
+        pass
+
+    def __parse_comment(self, string, index):
+        parsed = ""
+        #should parse until it gets to a newline
+        while index < len(string) and string[index] != "\n":
+            parsed += string[index]
+            index += 1
+        if parsed == "":
+            return self.FAIL
+        return Parse(parsed, index)
+
+
+    def __parse_space(self, string, index):
+        parsed = ""
+        while index < len(string) and string[index] == " ":
+            parsed += string[index]
+            index += 1
+        if parsed == "":
+            return self.FAIL
+        return Parse(parsed, index)
+
+    def __parse_newline(self, string, index):
+        parsed = ""
+        while index < len(string) and string[index] == "\n":
             parsed += string[index]
             index += 1
         if parsed == "":
@@ -116,7 +178,7 @@ class Parser:
         :param index:
         :return: Parse of add|sub expression
         '''
-        space_parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
+        space_parse = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
         if space_parse != self.FAIL:
             index = space_parse.index
         left_parse = self.__parse(string, index, "mult|div")  # parses the mult expression (if no expression returns int
@@ -137,7 +199,7 @@ class Parser:
             if string[index] == "+":  # if the operation was addition +
                 parent = StatementParse(right_parse.index, "+")
                 parent.children.append(left_parse) # add right/left parse
-                parent.children.append(right_parse)  # @ FIXME add the left parse before the right parse
+                parent.children.append(right_parse)
                 left_parse = parent  # set left parse to parent
 
             if string[index] == "-":  # if the operation was subtraction  -
@@ -157,7 +219,7 @@ class Parser:
         :param index:
         :return: Parse of mult|div expression
         '''
-        space_parse = self.__parse(string, index, "space")  # parse spaces before operand and add to index
+        space_parse = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
         if space_parse != self.FAIL:
             index = space_parse.index
         left_parse = self.__parse(string, index, "operand")  # parses the int at start of expression
@@ -195,7 +257,7 @@ class Parser:
         :param index:
         :return: Parsed parenthesized expression
         '''
-        space_parse = self.__parse(string, index, "space")  # checks for space at start of parenthesis and adds to index
+        space_parse = self.__parse(string, index, "op_space")  # checks for space at start of parenthesis and adds to index
         if space_parse != self.FAIL:
             index = space_parse.index  # if parse of spaces was success add to index
         if string[index] != '(':  # check if the string starts with open parenthesis
@@ -205,7 +267,7 @@ class Parser:
             return self.FAIL
         if string[parse.index] != ")":  # checks char at end of addition string, if not a close paren, then fail
             return self.FAIL
-        space_parse = self.__parse(string, parse.index + 1,"space")  # checks for space at end and adds to index
+        space_parse = self.__parse(string, parse.index + 1,"op_space")  # checks for space at end and adds to index
         if space_parse != self.FAIL:  # if spaces return with spaces index
             parse.index = space_parse.index
             return parse
@@ -216,9 +278,10 @@ class Parser:
     def test(self):
         parser = Parser()
         # test_parse(parser, "3+5+5*5", "add|sub", Parse(33, 9))
-        term = parser.parse("2+2*2", "add|sub")
-        print(term.to_string())
-        term = parser.parse("2*2+2", "add|sub")
+        # term = parser.parse("2+2*2", "add|sub")
+        # print(term.to_string())
+        # term = parser.parse("    2*     2+2", "add|sub")
+        term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
         print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
