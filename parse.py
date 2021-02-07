@@ -177,6 +177,8 @@ class Parser:
                 parent.children.append(left_parse)
                 left_parse = parent  # set left parse to parent
             index = right_parse.index  # set index to right parse index
+        if parent == None:
+            return left_parse  # if there was no expression return the left operand
         return parent  # return the root level parent
 
     def __parse_mult_div_expression(self, string, index):  # parse multiplication and division
@@ -214,6 +216,8 @@ class Parser:
                 parent.children.append(left_parse)
                 left_parse = parent  # set left parse to parent
             index = right_parse.index  # set index to right parse index
+        if parent == None:
+            return left_parse  # if there was no expression return the left operand
         return parent
 
     def __parse_parenthesis(self, string, index):  # @todo add a parse for mult and div
@@ -234,8 +238,11 @@ class Parser:
             return self.FAIL
         space_parse = self.__parse(string, parse.index + 1,"space")  # checks for space at end and adds to index
         if space_parse != self.FAIL:  # if spaces return with spaces index
-            return Parse(parse.value, space_parse.index)
-        return Parse(parse.value, parse.index + 1)  # add one index to account for close paren
+            parse.index = space_parse.index
+            return parse
+        parse.index +=1
+        return parse # add one index to account for close parent \ return statement parse
+
 
     def test(self):
         parser = Parser()
@@ -328,12 +335,12 @@ class Parser:
         # test_parse(parser, "(5+(4+5))", "parenthesis", Parse(14, 9))
         # test_parse(parser, "5*5", "mult|div", Parse(25, 3))
         # test_parse(parser, "1   *  17   ", "mult|div", Parse(17, 12))
-        test_parse(parser, "5*10*2", "mult|div", Parse(100, 6))
+        # test_parse(parser, "5*10*2", "mult|div", Parse(100, 6))
         # test_parse(parser, "5/5", "mult|div", Parse(1, 3))
         # test_parse(parser, "5+5/5", "add|sub", Parse(6, 5))
         # test_parse(parser, "5*5/5", "mult|div", Parse(5, 5))
         # test_parse(parser, "(5/5)", "mult|div", Parse(1, 5))
-        # test_parse(parser, "3+5+(5*5)", "add|sub", Parse(33, 9))
+        test_parse(parser, "3+5+(5*5)", "add|sub", Parse(33, 9))
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
         '''
