@@ -1,3 +1,4 @@
+from interperter import  Interperter
 
 class Parse:
 
@@ -44,6 +45,11 @@ class StatementParse():
         expression_result += ")"
         return expression_result
 
+class ProgramParse():
+
+    def __init__(self, index, type):
+        self.index = index
+        self.children = []
 
 
 
@@ -269,7 +275,7 @@ class Parser:
         :param index:
         :return: Parsed parenthesized expression
         '''
-        space_parse = self.__parse(string, index, "op_space")  # checks for space at start of parenthesis and adds to index
+        space_parse = self.__parse(string, index, "op_space")  # checks for space at start of parenthesis/ adds to index
         if space_parse != self.FAIL:
             index = space_parse.index  # if parse of spaces was success add to index
         if string[index] != '(':  # check if the string starts with open parenthesis
@@ -287,10 +293,20 @@ class Parser:
         return parse # add one index to account for close parent \ return statement parse
 
     def __parse_program(self, string, index):
+        space_parse = self.__parse(string, index, "op_space")
+        if space_parse != self.FAIL:  # if op space add to index
+            index = space_parse.index
+
         pass
 
     def __parse_statement(self, string, index):
-        pass
+        parse = self.__parse(string, index, "print_statement")  # try to parse print statement
+        if parse != self.FAIL:
+            return parse
+        parse = self.__parse(string, index, "expression")  # try to parse for expression
+        if parse != self.FAIL:
+            return parse
+        return self.FAIL  # if no expression or print then fail
 
     def __parse_expression(self, string, index):
         parse = self.__parse(string, index, "add|sub")
@@ -328,9 +344,12 @@ class Parser:
         # print(term.to_string())
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
-        term = parser.parse("print 2+2*2;", "print_statement")
+        term = parser.parse("print (2+2)*2;", "print_statement")
         # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
+
+        interperter = Interperter()
+        interperter.execute(term)
 
 
 def test_parse(parser, string, term, expected):
