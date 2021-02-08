@@ -6,8 +6,8 @@ class Interperter():
         if node.type == "print":
             try:
                 self.__execute_print(node)
-            except AssertionError as error:
-                print(error)
+            except Exception as error:
+                raise SyntaxError
         else:
             self.eval(node)
 
@@ -44,6 +44,8 @@ class Interperter():
     def __eval_divide(self, node):
         left_divide = self.eval(node.children[0])
         right_divide = self.eval(node.children[1])
+        if right_divide == 0:
+            raise RuntimeError("divide by zero")
         quotient = left_divide // right_divide
         return quotient
 

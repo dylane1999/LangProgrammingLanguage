@@ -344,7 +344,7 @@ class Parser:
         # print(term.to_string())
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
-        term = parser.parse("print (2+2)*2;", "print_statement")
+        term = parser.parse("print 5+5/0;", "print_statement")
         # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
