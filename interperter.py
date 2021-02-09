@@ -3,9 +3,19 @@ class Interperter():
     output_int = 0
 
     def execute(self, node):
-        if node.type == "print":
+        if node.type == "print_statement":
             try:
                 self.__execute_print(node)
+            except Exception as error:
+                raise SyntaxError
+        elif node.type == "assignment_statement":
+            try:
+                self.__execute_assignment_statement(node)
+            except Exception as error:
+                raise SyntaxError
+        elif node.type == "declaration_statement":
+            try:
+                self.__execute_declaration_statement(node)
             except Exception as error:
                 raise SyntaxError
         else:
@@ -28,6 +38,18 @@ class Interperter():
     def __execute_print(self, node):
         result = self.eval(node.children[0])
         print(result)
+
+    def __execute_assignment_statement(self, node):
+        variable_name = node.children[0].value
+        assignment_result = self.eval(node.children[1])
+        variable_name = assignment_result
+        return
+
+    def __execute_declaration_statement(self, node):
+        # eval things on the right side of the equation
+        assignment_statement = node.children[0]
+        self.__execute_assignment_statement(assignment_statement)
+        return
 
     def __eval_plus(self, node):
         left_sum = self.eval(node.children[0])
