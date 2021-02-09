@@ -94,6 +94,18 @@ class Parser:
             return self.__parse_expression(string, index)
         elif term == "print_statement":
             return self.__parse_print_statement(string, index)
+        elif term == "identifier_first_char":
+            return self.__parse_identifier_first_char(string, index)
+        elif term == "identifier_char":
+            return self.__parse_identifier_char(string, index)
+        elif term == "identifier":
+            return self.__parse_identifier(string, index)
+        elif term == "location":
+            return self.__parse_location(string, index)
+        elif term == "assignment_statement":
+            return self.__parse_assignment_statement(string, index)
+        elif term == "declaration_statement":
+            return self.__parse_declaration_statement(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -322,6 +334,7 @@ class Parser:
         parse = self.__parse(string, index, "req_space")  # parse the required one space or newline
         if parse == self.FAIL:
             return self.FAIL
+        index +=1  # add one for req space
         expression_parse = self.__parse(string, index, "expression")  # parse for the expression
         if expression_parse == self.FAIL:
             return self.FAIL
@@ -331,9 +344,124 @@ class Parser:
             index = space_parse.index
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
-        print_statement = StatementParse(index, "print")
+        print_statement = StatementParse(index, "print_statement")
         print_statement.children.append(expression_parse)
         return print_statement
+
+
+    def __parse_identifier_first_char(self, string, index):
+        parsed = ""
+        if (not string[index].isalpha()) and (string[index] != "_"):  # if string is not a letter and string not a _
+            return self.FAIL
+        parsed += string[index]
+        index += 1
+        return Parse(parsed, index)
+
+    def __parse_identifier_char(self, string, index):
+        parsed = ""
+        while index < len(string) and string[index].isalnum():  # loops and adds to parsed while still alphanumeric
+            parsed += string[index]
+            index +=1
+        return Parse(parsed, index)
+
+    def __check_forbidden_names(self, string):
+        if string == "print":
+            return True
+        elif string == "var":
+            return True
+        elif string == "if":
+            return True
+        elif string == "while":
+            return True
+        elif string == "funct":
+            return True
+        elif string == "ret":
+            return True
+        elif string == "class":
+            return True
+        elif string == "int":
+            return True
+        elif string == "bool":
+            return True
+        elif string == "string":
+            return True
+        return False  # return a boolean if the identifier name is one of the forbidden names
+
+    def __parse_identifier(self, string, index):
+        parsed = ""
+        parse_first_char = self.__parse(string, index, "identifier_first_char")  # get first char
+        if parse_first_char == self.FAIL:  # check for fail
+            return self.FAIL
+        parsed += parse_first_char.value  # add index and value
+        index = parse_first_char.index
+        parse_remaining = self.__parse(string, index, "identifier_char")  # parse for remaining chars
+        parsed += parse_remaining.value
+        index = parse_remaining.index  # add index and value
+        if self.__check_forbidden_names(parsed):
+            return self.FAIL
+        return Parse(parsed, index)
+
+
+    def __parse_location(self, string, index):
+        parse_identifier = self.__parse(string, index, "identifier")
+        if parse_identifier == self.FAIL:
+            return self.FAIL
+        return parse_identifier
+
+    def __parse_assignment_statement(self, string, index):
+        location_parse = self.__parse(string, index, "location")  # parse the location
+        if location_parse == self.FAIL:
+            return self.FAIL
+        index = location_parse.index  # add location_parse index
+        op_space = self.__parse(string, index, "op_space")
+        if op_space != self.FAIL:
+            index = op_space.index  # if optional space then add to index
+        if string[index] != "=":
+            return self.FAIL  # if the next char is not a = then fail
+        index += 1  # add one for the =
+        op_space = self.__parse(string, index, "op_space")
+        if op_space != self.FAIL:
+            index = op_space.index  # if optional space then add to index
+        expression_parse = self.__parse(string, index, "expression")  # parse for an expression statement
+        if expression_parse == self.FAIL:
+            return self.FAIL
+        index = expression_parse.index  # add expression_parse to index
+        op_space = self.__parse(string, index, "op_space")
+        if op_space != self.FAIL:
+            index = op_space.index  # if optional space then add to index
+        if string[index] != ";":
+            return self.FAIL  #  check for the ; end char
+        assignment_parse = StatementParse(index, "assignment_statement")
+        assignment_parse.children.append(location_parse)
+        assignment_parse.children.append(expression_parse)  # add the location & expression parse as children
+        return assignment_parse
+
+
+
+
+
+    def __parse_declaration_statement(self, string, index):
+        var = string[0:3]  # check for var
+        if var != "var":
+            return self.FAIL
+        index += 3  # skip to end of var
+        req_space = self.__parse(string, index, "req_space")  # parse the required one space or newline
+        if req_space == self.FAIL:
+            return self.FAIL
+        index +=1  # add one for req space
+        assignment_statement = self.__parse(string, index, "assignment_statement")
+        if assignment_statement == self.FAIL:
+            return self.FAIL  # if no assignment then fail
+        index = assignment_statement.index
+        declaration_statement = StatementParse(index, "declaration_statement")
+        declaration_statement.children.append(assignment_statement)
+        return declaration_statement
+
+
+
+
+
+
 
 
 
@@ -344,7 +472,8 @@ class Parser:
         # print(term.to_string())
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
-        term = parser.parse("print 5+5/0;", "print_statement")
+        # term = parser.parse("print 5+5*2;", "print_statement")
+        term = parser.parse("var kola = 5+5*2;", "declaration_statement")
         # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
