@@ -60,10 +60,18 @@ class Interpreter:
 
     def __execute_assignment_statement(self, node):
         variable_name = node.children[0].value
-        if variable_name not in self.environment.variable_map.keys():  # if the var name does not exist it is undefined
+        env = self.environment
+        result_env = None
+        while (env is not None):
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+
+        if result_env == None:  # if the var name does not exist it is undefined
             raise Exception("variable is not defined")
         assignment_result = self.eval(node.children[1])
-        self.environment.variable_map[variable_name] = assignment_result  # set the variable as the key in the env dict
+        result_env.variable_map[variable_name] = assignment_result  # set the variable as the key in the env dict
         return
 
     def __execute_declaration_statement(self, node):
