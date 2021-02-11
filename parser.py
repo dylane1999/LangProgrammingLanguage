@@ -1,4 +1,4 @@
-from interperter import  Interperter
+from interpreter import  Interpreter
 
 class Parse:
 
@@ -116,6 +116,9 @@ class Parser:
         parse = self.__parse(string, index, "parenthesis")
         if parse != self.FAIL:
             return parse
+        parse = self.__parse(string, index, "identifier")
+        if parse != self.FAIL:
+            return parse
         return self.FAIL  # may need to add index here to return
 
     def __parse_integer(self, string, index):
@@ -165,8 +168,11 @@ class Parser:
 
 
     def __parse_required_space(self, string, index):
+        parsed = ""
         parse = self.__parse(string, index, "op_space")
-        if parse.value == " " or parse.value == "\n":
+        # if parse length is not at least one then fail
+        parsed += parse.value
+        if len(parsed) >= 1:
             return parse
         return self.FAIL
 
@@ -327,7 +333,11 @@ class Parser:
         return parse
 
     def __parse_print_statement(self, string, index):
-        print = string[0:5]  # check for print
+        #check for spaces at the start of a print statement
+        space_parse = self.__parse(string, index, "op_space")
+        if space_parse != self.FAIL:  # if optional space, add to index
+            index = space_parse.index
+        print = string[index:index + 5]  # check for print
         if print != "print":
             return self.FAIL
         index += 5  # skip to end of print
@@ -364,28 +374,6 @@ class Parser:
             index +=1
         return Parse(parsed, index)
 
-    def __check_forbidden_names(self, string):
-        if string == "print":
-            return True
-        elif string == "var":
-            return True
-        elif string == "if":
-            return True
-        elif string == "while":
-            return True
-        elif string == "funct":
-            return True
-        elif string == "ret":
-            return True
-        elif string == "class":
-            return True
-        elif string == "int":
-            return True
-        elif string == "bool":
-            return True
-        elif string == "string":
-            return True
-        return False  # return a boolean if the identifier name is one of the forbidden names
 
     def __parse_identifier(self, string, index):
         parsed = ""
@@ -397,8 +385,6 @@ class Parser:
         parse_remaining = self.__parse(string, index, "identifier_char")  # parse for remaining chars
         parsed += parse_remaining.value
         index = parse_remaining.index  # add index and value
-        if self.__check_forbidden_names(parsed):
-            return self.FAIL
         return Parse(parsed, index)
 
 
@@ -473,12 +459,12 @@ class Parser:
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
         # term = parser.parse("print 5+5*2;", "print_statement")
-        term = parser.parse("var kola = 5+5*2;", "declaration_statement")
+        term = parser.parse("var print = 5+5*2;", "declaration_statement")
         # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
-        interperter = Interperter()
-        interperter.execute(term)
+        interpreter = Interpreter()
+        interpreter.execute(term)
 
 
 def test_parse(parser, string, term, expected):
