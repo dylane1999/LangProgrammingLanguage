@@ -459,12 +459,13 @@ class Parser:
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
         # term = parser.parse("print 5+5*2;", "print_statement")
-        term = parser.parse("var print = 5+5*2;", "declaration_statement")
+        term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
         # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
 
         interpreter = Interpreter()
-        interpreter.execute(term)
+        x = interpreter.execute(term)
+        print(x)
 
 
 def test_parse(parser, string, term, expected):
