@@ -1,6 +1,16 @@
-class Interpreter():
-    output_string = ""
-    output_int = 0
+
+
+
+
+class Interpreter:
+    def __init__(self):
+        self.environment = self.Environment({}, None)
+
+    class Environment:
+        def __init__(self, variable_map, previous_env):
+            self.variable_map = variable_map
+            self.previous_env = previous_env
+
 
     def execute(self, node):
         try:
@@ -50,20 +60,24 @@ class Interpreter():
 
     def __execute_assignment_statement(self, node):
         variable_name = node.children[0].value
-        if self.__check_forbidden_names(variable_name):
-            raise SyntaxError("forbidden variable name")
+        if variable_name not in self.environment.variable_map.keys():  # if the var name does not exist it is undefined
+            raise Exception("variable is not defined")
         assignment_result = self.eval(node.children[1])
-        variable_name = assignment_result
-        # @TODO find the correct Environment in the chain, then set its value to the eval of the right hand side
+        self.environment.variable_map[variable_name] = assignment_result  # set the variable as the key in the env dict
         return
 
     def __execute_declaration_statement(self, node):
         # eval things on the right side of the equation
         assignment_statement = node.children[0]
-        # @TODO create the variable in the curent environemnt
+        variable_name = assignment_statement.children[0].value
+        #if item already in keys throw a already declared error
+        declared_vars = self.environment.variable_map.keys()
+        if variable_name in declared_vars:
+            raise Exception("variable already defined")
+        if self.__check_forbidden_names(variable_name):
+            raise Exception("forbidden variable name")  # check for exceptions on variable name
+        self.environment.variable_map[variable_name] = ""
         self.__execute_assignment_statement(assignment_statement)
-
-        # if the var name is a forbidden then synatax erroe
         return
 
 
