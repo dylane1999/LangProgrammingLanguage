@@ -92,3 +92,20 @@
 # test_parse(parser, "5+5/5", "add|sub", Parse(6, 5))
 # test_parse(parser, "5*5/5", "mult|div", Parse(5, 5))
 # test_parse(parser, "(5/5)", "mult|div", Parse(1, 5))
+
+
+# test_parse(parser, "3+5+5*5", "add|sub", Parse(33, 9))
+# term = parser.parse("2+2*2", "add|sub")
+# print(term.to_string())
+# term = parser.parse("    2*     2+2", "add|sub")
+# term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
+# term = parser.parse("print 5+5*2;", "print_statement")
+# test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
+#
+# term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
+#
+# x = interpreter.execute(term)
+# term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
+#
+# x = interpreter.execute(term)
+# print(x)

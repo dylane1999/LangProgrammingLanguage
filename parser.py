@@ -513,23 +513,9 @@ class Parser:
     def test(self):
         parser = Parser()
         interpreter = Interpreter()
-        # test_parse(parser, "3+5+5*5", "add|sub", Parse(33, 9))
-        # term = parser.parse("2+2*2", "add|sub")
-        # print(term.to_string())
-        # term = parser.parse("    2*     2+2", "add|sub")
-        # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
-        # term = parser.parse("print 5+5*2;", "print_statement")
-        # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
-        #
-        # term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
-        #
-        # x = interpreter.execute(term)
-        # term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
-        #
-        # x = interpreter.execute(term)
-        # print(x)
 
-        term = parser.parse("var vader = 5+5*2; print vader;", "program")  #test for print
+
+        term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to redefine variabes and print correct output
         # print(term.to_string())
         x = interpreter.execute(term)
 
@@ -537,18 +523,12 @@ class Parser:
         # term = parser.parse("var if = 5+5*2;", "declaration_statement")  # test for if
         # print(term.to_string())
         #
-        # term = parser.parse("var x = 5+5*2;", "declaration_statement")  # test for if
+        # term = parser.parse("var x = 5+5*2;", "declaration_statement")  # test for if normal
         # print(term.to_string())
 
         # term = parser.parse("var  = 5+5*2;", "declaration_statement")  # test for no variable
         # print(term.to_string())
-        #
-        # term = parser.parse("  = 5+5*2;", "declaration_statement")  # test for no var
-        # print(term.to_string())
-        #
-        #
-        # term = parser.parse("var var = 5+5*2;", "declaration_statement")  # test for double var
-        # print(term.to_string())
+
         #
         #
         # term = parser.parse("var 5variable = 323;", "declaration_statement")  # test for var cannot start w number
@@ -560,9 +540,18 @@ class Parser:
         #
         #
         #
-        # term = parser.parse("var vari$a!ble = 323;", "declaration_statement")  # test for var cannot contain non alphanumeric chars
+        # term = parser.parse("var vader = 5+5*2; print vader;", "declaration_statement")  # normal
         # print(term.to_string())
 
+        # term = parser.parse("var foo = 5+5*2; print foo; foo = 5; print foo;", "program")  #test for ability to redefine variabes and print correct output
+        # print(term.to_string())
+
+        # term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program")  #test for ability to have to variables
+        # print(term.to_string())
+
+
+        # term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to have a variable equal to another variable
+        # print(term.to_string())
 
 
 def test_parse(parser, string, term, expected):
