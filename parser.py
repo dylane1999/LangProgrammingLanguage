@@ -28,6 +28,18 @@ class IntergerParse():
         # return the value casted to string
         return str(self.value)
 
+
+class LocationParse():
+
+    def __init__(self, value, index):
+        self.value = value
+        self.index = index
+        self.type = "location"
+
+    def to_string(self):
+        # return the value
+        return self.value
+
 class StatementParse():
 
     def __init__(self, index, type):
@@ -50,6 +62,19 @@ class ProgramParse():
     def __init__(self, index, type):
         self.index = index
         self.children = []
+
+    def to_string(self):
+        expression_result = ""
+        expression_result += "("
+        for child in self.children:
+            expression_result += " " + child.to_string()
+        expression_result += ")"
+        return expression_result
+
+
+
+
+        # add a variable name parse
 
 
 
@@ -92,6 +117,8 @@ class Parser:
             return self.__parse_statement(string, index)
         elif term == "expression":
             return self.__parse_expression(string, index)
+        elif term == "expression_statement":
+            return self.__parse_expression_statement(string, index)
         elif term == "print_statement":
             return self.__parse_print_statement(string, index)
         elif term == "identifier_first_char":
@@ -170,9 +197,10 @@ class Parser:
     def __parse_required_space(self, string, index):
         parsed = ""
         parse = self.__parse(string, index, "op_space")
-        # if parse length is not at least one then fail
+        if parse == self.FAIL:  # if op space was fail then fail
+            return self.FAIL
         parsed += parse.value
-        if len(parsed) >= 1:
+        if len(parsed) >= 1:  # if parse length is not at least one then fail
             return parse
         return self.FAIL
 
@@ -311,17 +339,33 @@ class Parser:
         return parse # add one index to account for close parent \ return statement parse
 
     def __parse_program(self, string, index):
+        program = ProgramParse(index, "program")
         space_parse = self.__parse(string, index, "op_space")
         if space_parse != self.FAIL:  # if op space add to index
             index = space_parse.index
-
-        pass
+        statement_parse = None
+        while index < len(string) and statement_parse != self.FAIL:
+            statement_parse = self.__parse(string, index, "statement")
+            if statement_parse == self.FAIL:
+                break
+            program.children.append(statement_parse)  # add the statement to the program
+            index = statement_parse.index  # add the current statement parse to current index
+            space_parse = self.__parse(string, index, "op_space")
+            if space_parse != self.FAIL:  # if op space add to index
+                index = space_parse.index
+        return program  # return the program
 
     def __parse_statement(self, string, index):
-        parse = self.__parse(string, index, "print_statement")  # try to parse print statement
+        parse = self.__parse(string, index, "declaration_statement")  # try to parse print statement
         if parse != self.FAIL:
             return parse
-        parse = self.__parse(string, index, "expression")  # try to parse for expression
+        parse = self.__parse(string, index, "assignment_statement")  # try to parse for expression
+        if parse != self.FAIL:
+            return parse
+        parse = self.__parse(string, index, "print_statement")  # try to parse for expression
+        if parse != self.FAIL:
+            return parse
+        parse = self.__parse(string, index, "expression_statement")  # try to parse for expression
         if parse != self.FAIL:
             return parse
         return self.FAIL  # if no expression or print then fail
@@ -330,6 +374,18 @@ class Parser:
         parse = self.__parse(string, index, "add|sub")
         if parse == self.FAIL:
             return self.FAIL
+        return parse
+
+    def __parse_expression_statement(self, string, index):
+        space_parse = self.__parse(string, index, "op_space")
+        if space_parse != self.FAIL:  # if optional space, add to index
+            index = space_parse.index
+        parse = self.__parse(string, index, "add|sub")
+        if parse == self.FAIL:
+            return self.FAIL
+        if string[index] != ";":  # check for the ; end char
+            return self.FAIL
+        index += 1 # add one index for the semi colon
         return parse
 
     def __parse_print_statement(self, string, index):
@@ -354,6 +410,7 @@ class Parser:
             index = space_parse.index
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
+        index += 1 # add one index for the semi colon
         print_statement = StatementParse(index, "print_statement")
         print_statement.children.append(expression_parse)
         return print_statement
@@ -392,7 +449,7 @@ class Parser:
         parse_identifier = self.__parse(string, index, "identifier")
         if parse_identifier == self.FAIL:
             return self.FAIL
-        return parse_identifier
+        return LocationParse(parse_identifier.value, parse_identifier.index)
 
     def __parse_assignment_statement(self, string, index):
         location_parse = self.__parse(string, index, "location")  # parse the location
@@ -417,6 +474,7 @@ class Parser:
             index = op_space.index  # if optional space then add to index
         if string[index] != ";":
             return self.FAIL  #  check for the ; end char
+        index += 1  # add one index for the semi colon
         assignment_parse = StatementParse(index, "assignment_statement")
         assignment_parse.children.append(location_parse)
         assignment_parse.children.append(expression_parse)  # add the location & expression parse as children
@@ -453,19 +511,55 @@ class Parser:
 
     def test(self):
         parser = Parser()
+        interpreter = Interpreter()
         # test_parse(parser, "3+5+5*5", "add|sub", Parse(33, 9))
         # term = parser.parse("2+2*2", "add|sub")
         # print(term.to_string())
         # term = parser.parse("    2*     2+2", "add|sub")
         # term = parser.parse("2\n *2\n #fkldsalfja  \n+2 # asdfdesfklfkljsdk", "add|sub")
         # term = parser.parse("print 5+5*2;", "print_statement")
-        term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
-        # print(term.to_string())
         # test_parse(parser, "(5*5)+3+5", "add|sub", Parse(33, 9))
+        #
+        # term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
+        #
+        # x = interpreter.execute(term)
+        # term = parser.parse("var testVar = 5+5*2;", "declaration_statement")
+        #
+        # x = interpreter.execute(term)
+        # print(x)
 
-        interpreter = Interpreter()
-        x = interpreter.execute(term)
-        print(x)
+        term = parser.parse("var vader = 5+5*2; print vader;", "program")  #test for print
+        print(term.to_string())
+
+        # term = parser.parse("var if = 5+5*2;", "declaration_statement")  # test for if
+        # print(term.to_string())
+        #
+        # term = parser.parse("var x = 5+5*2;", "declaration_statement")  # test for if
+        # print(term.to_string())
+
+        # term = parser.parse("var  = 5+5*2;", "declaration_statement")  # test for no variable
+        # print(term.to_string())
+        #
+        # term = parser.parse("  = 5+5*2;", "declaration_statement")  # test for no var
+        # print(term.to_string())
+        #
+        #
+        # term = parser.parse("var var = 5+5*2;", "declaration_statement")  # test for double var
+        # print(term.to_string())
+        #
+        #
+        # term = parser.parse("var 5variable = 323;", "declaration_statement")  # test for var cannot start w number
+        # print(term.to_string())
+        #
+        #
+        # term = parser.parse("var vari$a!ble = 323;", "declaration_statement")  # test for var cannot contain non alphanumeric chars
+        # print(term.to_string())
+        #
+        #
+        #
+        # term = parser.parse("var vari$a!ble = 323;", "declaration_statement")  # test for var cannot contain non alphanumeric chars
+        # print(term.to_string())
+
 
 
 def test_parse(parser, string, term, expected):

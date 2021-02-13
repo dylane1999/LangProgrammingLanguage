@@ -14,7 +14,12 @@ class Interpreter:
 
     def execute(self, node):
         try:
-            if node.type == "print_statement":
+            if node.type == "program":
+                try:
+                    return self.__execute_program(node)
+                except Exception as error:
+                    raise SyntaxError
+            elif node.type == "print_statement":
                 try:
                     return self.__execute_print(node)
                 except Exception as error:
@@ -33,7 +38,7 @@ class Interpreter:
                 self.eval(node)
 
         except Exception as error:
-            return "syntax error"
+            return error
 
 
 
@@ -51,6 +56,11 @@ class Interpreter:
                 return self.__eval_int(node)
         except Exception as error:
             return error
+
+
+    def __execute_program(self, program):
+        for node in program:
+            self.execute(node)
 
 
     def __execute_print(self, node):
@@ -81,7 +91,7 @@ class Interpreter:
         #if item already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
-            raise Exception("variable already defined")
+            raise ValueError("variable already defined")
         if self.__check_forbidden_names(variable_name):
             raise Exception("forbidden variable name")  # check for exceptions on variable name
         self.environment.variable_map[variable_name] = ""
