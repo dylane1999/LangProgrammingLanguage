@@ -54,12 +54,14 @@ class Interpreter:
                 return self.__eval_divide(node)
             elif node.type == "int":
                 return self.__eval_int(node)
+            elif node.type == "location":
+                return self.__eval_lookup(node)
         except Exception as error:
             return error
-
+# add a method here to get a var
 
     def __execute_program(self, program):
-        for node in program:
+        for node in program.children:
             self.execute(node)
 
 
@@ -100,8 +102,21 @@ class Interpreter:
 
 
     def __eval_lookup(self, node):
-        # @todo find the variable in the correct Environment in the chain nd use its value
-        pass
+        variable_name = node.value
+        env = self.environment
+        result_env = None
+        while (env is not None):
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+
+        if result_env == None:  # if the var name does not exist it is undefined
+            raise Exception("variable is not defined")
+
+        result_value = env.variable_map.get(variable_name)
+
+        return result_value
 
     def __eval_plus(self, node):
         left_sum = self.eval(node.children[0])

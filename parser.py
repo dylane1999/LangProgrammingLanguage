@@ -29,7 +29,7 @@ class IntergerParse():
         return str(self.value)
 
 
-class LocationParse():
+class IdentifierParse():
 
     def __init__(self, value, index):
         self.value = value
@@ -61,6 +61,7 @@ class ProgramParse():
 
     def __init__(self, index, type):
         self.index = index
+        self.type = "program"
         self.children = []
 
     def to_string(self):
@@ -442,14 +443,14 @@ class Parser:
         parse_remaining = self.__parse(string, index, "identifier_char")  # parse for remaining chars
         parsed += parse_remaining.value
         index = parse_remaining.index  # add index and value
-        return Parse(parsed, index)
+        return IdentifierParse(parsed, index)
 
 
     def __parse_location(self, string, index):
         parse_identifier = self.__parse(string, index, "identifier")
         if parse_identifier == self.FAIL:
             return self.FAIL
-        return LocationParse(parse_identifier.value, parse_identifier.index)
+        return parse_identifier
 
     def __parse_assignment_statement(self, string, index):
         location_parse = self.__parse(string, index, "location")  # parse the location
@@ -529,7 +530,9 @@ class Parser:
         # print(x)
 
         term = parser.parse("var vader = 5+5*2; print vader;", "program")  #test for print
-        print(term.to_string())
+        # print(term.to_string())
+        x = interpreter.execute(term)
+
 
         # term = parser.parse("var if = 5+5*2;", "declaration_statement")  # test for if
         # print(term.to_string())
