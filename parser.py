@@ -29,18 +29,16 @@ class IntergerParse():
         return str(self.value)
 
 
-class IdentifierParse():
+# class IdentifierParse():
+#
+#     def __init__(self, value, index):
+#         self.value = value
+#         self.index = index
+#         self.type = "lookup"
 
-    def __init__(self, value, index):
-        self.value = value
-        self.index = index
-        self.type = "location"
 
-    def to_string(self):
-        # return the value
-        return self.value
 
-class StatementParse():
+class StatementParse():  # fixme operation parse
 
     def __init__(self, index, type):
         self.index = index
@@ -57,6 +55,56 @@ class StatementParse():
         expression_result += ")"
         return expression_result
 
+
+class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an identifer
+    def __init__(self, value, index, type):
+        super().__init__(index, type)
+        self.value = value
+
+    def to_string(self):
+        # return the value + varloc
+        result = self.value
+        result = "(" + self.type + " " + self.value + ")"
+        return result
+
+#
+# class LookupParse(IdentifierParse):  # should have a type of lookup
+#     def __init__(self, value, index, type):
+#         super().__init__(value, index, type)
+#         self.value = value
+#
+#     def to_string(self):
+#         # return the value + varloc
+#         result = "(" + self.type + " " + self.value + ")"
+#         return result
+
+
+
+class VarLocationParse(IdentifierParse):  # should have a type of varloc  (assign)
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+        self.value = value
+
+    def to_string(self):
+        # return the value + varloc
+        result = "(" + self.type + " " + self.value + ")"
+        return result
+
+
+
+class DeclareLocationParse(IdentifierParse):  # should have a type of varloc  (declare)
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+        self.value = value
+
+    def to_string(self):
+        result = self.value
+        return result
+
+
+
+
+
 class ProgramParse():
 
     def __init__(self, index, type):
@@ -67,6 +115,7 @@ class ProgramParse():
     def to_string(self):
         expression_result = ""
         expression_result += "("
+        expression_result += "sequence"
         for child in self.children:
             expression_result += " " + child.to_string()
         expression_result += ")"
@@ -412,7 +461,7 @@ class Parser:
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
         index += 1 # add one index for the semi colon
-        print_statement = StatementParse(index, "print_statement")
+        print_statement = StatementParse(index, "print")
         print_statement.children.append(expression_parse)
         return print_statement
 
@@ -443,7 +492,7 @@ class Parser:
         parse_remaining = self.__parse(string, index, "identifier_char")  # parse for remaining chars
         parsed += parse_remaining.value
         index = parse_remaining.index  # add index and value
-        return IdentifierParse(parsed, index)
+        return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
 
 
     def __parse_location(self, string, index):
@@ -456,7 +505,9 @@ class Parser:
         location_parse = self.__parse(string, index, "location")  # parse the location
         if location_parse == self.FAIL:
             return self.FAIL
-        index = location_parse.index  # add location_parse index
+        # change var_lovation to be a VarLocation parse object
+        var_location = VarLocationParse(location_parse.value, location_parse.index, "varloc")
+        index = var_location.index  # add var_location index
         op_space = self.__parse(string, index, "op_space")
         if op_space != self.FAIL:
             index = op_space.index  # if optional space then add to index
@@ -476,8 +527,8 @@ class Parser:
         if string[index] != ";":
             return self.FAIL  #  check for the ; end char
         index += 1  # add one index for the semi colon
-        assignment_parse = StatementParse(index, "assignment_statement")
-        assignment_parse.children.append(location_parse)
+        assignment_parse = StatementParse(index, "assign")
+        assignment_parse.children.append(var_location)
         assignment_parse.children.append(expression_parse)  # add the location & expression parse as children
         return assignment_parse
 
@@ -497,9 +548,14 @@ class Parser:
         assignment_statement = self.__parse(string, index, "assignment_statement")
         if assignment_statement == self.FAIL:
             return self.FAIL  # if no assignment then fail
-        index = assignment_statement.index
-        declaration_statement = StatementParse(index, "declaration_statement")
-        declaration_statement.children.append(assignment_statement)
+        index = assignment_statement.index  # set index to assign index
+        variable = assignment_statement.children[0]  # get the variable from assignment
+        expression = assignment_statement.children[1]  # get the expression from assignment (rhs)
+        declaration_statement = StatementParse(index, "declare")
+        # @ FIXME broken not supposed to print varloc
+        identifier = DeclareLocationParse(variable.value, variable.index, variable.type)  # make var into identifier parse
+        declaration_statement.children.append(identifier)
+        declaration_statement.children.append(expression)  # add variable & expression as children of declare statement
         return declaration_statement
 
 
@@ -515,42 +571,48 @@ class Parser:
         interpreter = Interpreter()
 
 
-        term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to redefine variabes and print correct output
+        # term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to redefine variabes and print correct output
         # print(term.to_string())
-        x = interpreter.execute(term)
+        # x = interpreter.execute(term)
 
 
         # term = parser.parse("var if = 5+5*2;", "declaration_statement")  # test for if
         # print(term.to_string())
         #
-        # term = parser.parse("var x = 5+5*2;", "declaration_statement")  # test for if normal
+        # term = parser.parse("var x = 5+5*2;", "program")  # test for if normal   DONE
         # print(term.to_string())
 
+        term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program") #6
+        print(term.to_string())
+        term = parser.parse("print foo;; print foo;", "program") #7
+        print(term.to_string())
+        term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program") #8
+        print(term.to_string())
         # term = parser.parse("var  = 5+5*2;", "declaration_statement")  # test for no variable
         # print(term.to_string())
 
         #
         #
-        # term = parser.parse("var 5variable = 323;", "declaration_statement")  # test for var cannot start w number
+        # term = parser.parse("var 5variable = 323;", "declaration_statement")  # test for var cannot start w number  DONE
         # print(term.to_string())
         #
         #
-        # term = parser.parse("var vari$a!ble = 323;", "declaration_statement")  # test for var cannot contain non alphanumeric chars
+        # term = parser.parse("var vari$a!ble = 323;", "declaration_statement")  # test for var cannot contain non alphanumeric chars  DONE
         # print(term.to_string())
         #
         #
         #
-        # term = parser.parse("var vader = 5+5*2; print vader;", "declaration_statement")  # normal
-        # print(term.to_string())
-
-        # term = parser.parse("var foo = 5+5*2; print foo; foo = 5; print foo;", "program")  #test for ability to redefine variabes and print correct output
+        # term = parser.parse("var foo = 5+5*2; print foo;", "declaration_statement")  # normal     DONE
         # print(term.to_string())
 
-        # term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program")  #test for ability to have to variables
+        # term = parser.parse("var foo = 5+5*2; print foo; foo = 5; print foo;", "program")  #test for ability to redefine variabes and print correct output  DONE
+        # print(term.to_string())
+        #
+        # term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program")  #test for ability to have to variables DONE
         # print(term.to_string())
 
-
-        # term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to have a variable equal to another variable
+        #
+        # term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program")  #test for ability to have a variable equal to another variable  DONE
         # print(term.to_string())
 
 
