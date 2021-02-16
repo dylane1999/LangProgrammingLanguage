@@ -14,7 +14,12 @@ class Interpreter:
 
     def execute(self, node):
         try:
-            if node.type == "print_statement":
+            if node.type == "program":
+                try:
+                    return self.__execute_program(node)
+                except Exception as error:
+                    raise SyntaxError
+            elif node.type == "print_statement":
                 try:
                     return self.__execute_print(node)
                 except Exception as error:
@@ -33,7 +38,7 @@ class Interpreter:
                 self.eval(node)
 
         except Exception as error:
-            return "syntax error"
+            return error
 
 
 
@@ -49,8 +54,15 @@ class Interpreter:
                 return self.__eval_divide(node)
             elif node.type == "int":
                 return self.__eval_int(node)
+            elif node.type == "location":
+                return self.__eval_lookup(node)
         except Exception as error:
             return error
+# add a method here to get a var
+
+    def __execute_program(self, program):
+        for node in program.children:
+            self.execute(node)
 
 
     def __execute_print(self, node):
@@ -81,7 +93,7 @@ class Interpreter:
         #if item already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
-            raise Exception("variable already defined")
+            raise ValueError("variable already defined")
         if self.__check_forbidden_names(variable_name):
             raise Exception("forbidden variable name")  # check for exceptions on variable name
         self.environment.variable_map[variable_name] = ""
@@ -90,8 +102,21 @@ class Interpreter:
 
 
     def __eval_lookup(self, node):
-        # @todo find the variable in the correct Environment in the chain nd use its value
-        pass
+        variable_name = node.value
+        env = self.environment
+        result_env = None
+        while (env is not None):
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+
+        if result_env == None:  # if the var name does not exist it is undefined
+            raise Exception("variable is not defined")
+
+        result_value = env.variable_map.get(variable_name)
+
+        return result_value
 
     def __eval_plus(self, node):
         left_sum = self.eval(node.children[0])
