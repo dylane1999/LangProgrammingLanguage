@@ -109,3 +109,15 @@
 #
 # x = interpreter.execute(term)
 # print(x)
+
+
+# term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program") #6
+# print(term.to_string())
+# term = parser.parse("print foo;; print foo;", "program") #7
+# print(term.to_string())
+# term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program") #8
+# print(term.to_string())
+# term = parser.parse("var  = 5+5*2;", "declaration_statement")  # test for no variable
+# print(term.to_string())
+
+
