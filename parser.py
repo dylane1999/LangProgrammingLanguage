@@ -60,7 +60,7 @@ class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an 
         return result
 
 
-class VarLocationParse(IdentifierParse):  # should have a type of varloc  (assign)
+class AssignLocationParse(IdentifierParse):  # should have a type of varloc  (assign)
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
         self.value = value
@@ -403,6 +403,7 @@ class Parser:
             space_parse = self.__parse(string, index, "op_space")
             if space_parse != self.FAIL:  # if op space add to index
                 index = space_parse.index
+        program.index = index  # set program index = index
         return program  # return the program
 
     def __parse_statement(self, string, index):
@@ -515,7 +516,7 @@ class Parser:
         if location_parse == self.FAIL:
             return self.FAIL
         # change var_lovation to be a VarLocation parse object
-        var_location = VarLocationParse(location_parse.value, location_parse.index, "varloc")
+        var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
         index = var_location.index  # add var_location index
         op_space = self.__parse(string, index, "op_space")
         if op_space != self.FAIL:
@@ -595,13 +596,13 @@ class Parser:
 
 
     def __parse_comp_operator(self, string, index):
-        if string[index: index +1] == "==":
+        if string[index: index +2] == "==":  # bc right bound is exclusive add an extra +1
             return Parse("==", index +2)  # return index + 2 for each char
-        elif string[index: index + 1] == "!=":
+        elif string[index: index + 2] == "!=":
             return Parse("!=", index +2)
-        elif string[index: index + 1] == "<=":
+        elif string[index: index + 2] == "<=":
             return Parse("<=", index +2)
-        elif string[index: index + 1] == ">=":
+        elif string[index: index + 2] == ">=":
             return Parse(">=", index +2)
         elif string[index: index + 1] == "<":
             return Parse("<", index +1)  # add +1 for 1 char
@@ -621,6 +622,7 @@ class Parser:
         comp_expression = self.__parse(string,index, "comp_expression")
         if comp_expression == self.FAIL:
             return self.FAIL
+        index = comp_expression.index  # add comp exp to index
         not_expression = StatementParse(index, "not_expression")
         not_expression.children.append("!")
         not_expression.children.append(comp_expression)
@@ -708,15 +710,15 @@ class Parser:
         return parent
 
     def __parse_if_statement(self, string, index):
-        if_key = string[index: index + 5]
-        if if_key != "while":  # check that starts with if
+        if_key = string[index: index + 2]
+        if if_key != "if":  # check that starts with if
             return self.FAIL
-        index = if_key.index
+        index += 2  # add 2 for if
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
         if string[index] != "(":
-            self.FAIL
+            return self.FAIL
         index += 1 # add index for open paren
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -807,11 +809,12 @@ class Parser:
         while_key = string[index: index+5]
         if while_key != "while":  # check that starts with while
             return self.FAIL
+        index += 5 # add 5 for while
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
         if string[index] != "(":
-            self.FAIL
+            return self.FAIL
         index += 1 # add index for open paren
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -856,16 +859,41 @@ class Parser:
         parser = Parser()
         interpreter = Interpreter()
 
-
-
-        term = parser.parse("var foo = 5+5*2; print foo; var bar = foo; print bar;", "program") #6
-        print(term.to_string())
-        term = parser.parse("print foo;; print foo;", "program") #7
-        print(term.to_string())
-        term = parser.parse("var foo = 5+5*2; print foo; var bar = 5; print bar;", "program") #8
-        print(term.to_string())
-        # term = parser.parse("var  = 5+5*2;", "declaration_statement")  # test for no variable
+        # term = parser.parse("if (1) { print 1;  };", "program")  # 6
         # print(term.to_string())
+        # term = parser.parse("if (x+3*5) { print 1; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x+3*5) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x<1) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x<=1) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x=1) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x>=1) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x=>1) { print 1; var x=5; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x<=1) { print 1; var x=5; } else{ print 2; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("while (x==1) { print 1; };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("if (x<=1) { print 1; var x=5; } else{ while (x==1) { print 1; } };", "program")  # 6
+        # print(term.to_string())
+        # term = parser.parse("var x = 0; print x; x = (5 * 5) / 5; if (x){ print 45 * 645+54; }", "program")  # 6
+        term = parser.parse("var x = 1; if (x == 1){ var x = 2; print x;} print x; ", "program")  # check for ability to interpert var change correctly
+
+        # interpreter.execute(term)
+        print(term.to_string())
+
+
+
+
+
+
+
+
 
 
 
