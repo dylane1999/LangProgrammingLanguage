@@ -91,7 +91,21 @@ class Interpreter:
             elif node.type == "lookup":
                 return self.__eval_lookup(node)
             elif node.type == "varloc":
-                return self.__eval_lookup(node)  ## FIXME
+                return self.__eval_varloc(node)
+            elif node.type == "==":
+                return self.__eval_equals(node)
+            elif node.type == "!=":
+                return self.__eval_not_equals(node)
+            elif node.type == "<=":
+                return self.__eval_less_than_equal(node)
+            elif node.type == ">=":
+                return self.__eval_greater_than_equal(node)
+            elif node.type == "<":
+                return self.__eval_less_than(node)
+            elif node.type == ">":
+                return self.__eval_greater_than(node)
+
+
         except ValueError as error:
             raise error
 # add a method here to get a var
@@ -103,20 +117,20 @@ class Interpreter:
 
     def __execute_print(self, node):
         expression = self.__eval(node.children[0])
-        if isinstance(expression, self.Environment):
-            print(expression.variable_map[node.children[0].value])  # get the value out of the correct env
-            return
+        # if isinstance(expression, self.Environment):
+        #     print(expression.variable_map[node.children[0].value])  # get the value out of the correct env
+        #     return
         print(expression)
         return
 
 
-
-        y = self.__eval(x)
-        lookup = node.children[0]
-        env = self.__eval(lookup)
-        result = env.variable_map[lookup.value]  # get the value out of the correct env
-        print(result)
-        return str(result)
+        #
+        # y = self.__eval(x)
+        # lookup = node.children[0]
+        # env = self.__eval(lookup)
+        # result = env.variable_map[lookup.value]  # get the value out of the correct env
+        # print(result)
+        # return str(result)
 
     def __execute_assignment_statement(self, node):
         lookup = node.children[0] # get the lookup
@@ -140,17 +154,33 @@ class Interpreter:
 
 
 
-    def __eval_lookup(self, node):
+    def __eval_varloc(self, node):
         variable_name = node.value
         env = self.environment
         result_env = None
-        while result_env == None:
+        while result_env is None:
             if variable_name in env.variable_map.keys():
                 result_env = env
                 break
             env = env.previous_env
 
         return result_env
+
+
+    def __eval_lookup(self, node):
+        variable_name = node.value
+        env = self.environment
+        result_env = None
+        while (result_env is None) and (env is not None):
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+        if env is None:
+            raise ValueError("variable not defined")
+        result_value = result_env.variable_map[variable_name]
+        return result_value
+    # throw an error in here if there is no value
 
     # Eval lookup should return the env that the variable is in
 
@@ -212,24 +242,51 @@ class Interpreter:
     #for each comparison type I will have to eval both sides and return a boolean if they meet the specied type
 
     def __eval_equals(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs == rhs:
+            return True
+        return False
 
 
     def __eval_not_equals(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs != rhs:
+            return True
+        return False
 
     def __eval_less_than(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs < rhs:
+            return True
+        return False
+
 
     def __eval_greater_than(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs > rhs:
+            return True
+        return False
 
     def __eval_less_than_equal(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs <= rhs:
+            return True
+        return False
 
     def __eval_greater_than_equal(self, node):
-        pass
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs >= rhs:
+            return True
+        return False
 
+
+# CREATE a varloc that returns the env and the lookup should return the env
 
 
 
