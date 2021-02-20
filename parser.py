@@ -322,7 +322,7 @@ class Parser:
                 parent.children.append(right_parse)
                 left_parse = parent  # set left parse to parent
             index = right_parse.index  # set index to right parse index
-        if parent == None:
+        if parent is None:
             return left_parse  # if there was no expression return the left operand
         return parent  # return the root level parent
 
@@ -361,7 +361,7 @@ class Parser:
                 parent.children.append(right_parse)
                 left_parse = parent  # set left parse to parent
             index = right_parse.index  # set index to right parse index
-        if parent == None:
+        if parent is None:
             return left_parse  # if there was no expression return the left operand
         return parent
 
@@ -590,7 +590,7 @@ class Parser:
             parent.children.append(left_expression)
             parent.children.append(right_expression)
             left_expression = parent
-        if parent == None:
+        if parent is None:
             return left_expression  # if there was no comparison return the left expression
         return parent
 
@@ -675,7 +675,7 @@ class Parser:
             parent.children.append(left_expression)
             parent.children.append(right_expression)
             left_expression = parent
-        if parent == None:
+        if parent is None:
             return left_expression # if there was no comparison return the left expression
         return parent
 
@@ -705,7 +705,7 @@ class Parser:
             parent.children.append(left_expression)
             parent.children.append(right_expression)
             left_expression = parent
-        if parent == None:
+        if parent is None:
             return left_expression # if there was no comparison return the left expression
         return parent
 
@@ -875,7 +875,7 @@ class Parser:
         # print(term.to_string())
         # term = parser.parse("if (x=>1) { print 1; var x=5; };", "program")  # 6
         # print(term.to_string())
-        # term = parser.parse("if (x<=1) { print 1; var x=5; } else{ print 2; };", "program")  # 6
+        # term = parser.parse("var x=5; if (x<=1) { print 1; } else{ print 2; };", "program")  # check that conditonals working
         # print(term.to_string())
         # term = parser.parse("while (x==1) { print 1; };", "program")  # 6
         # print(term.to_string())
@@ -883,10 +883,10 @@ class Parser:
         # print(term.to_string())
         # term = parser.parse("var x = 0; print x; x = (5 * 5) / 5; if (x){ print 45 * 645+54; }", "program")  # 6
         # term = parser.parse("var x = 1; if (x == 1){ var x = 2; print x;} print x; ", "program")  DONE
-        term = parser.parse("var x = 1; if (x == 1 && x ==1 ) { if (x == 1) { if (x == 1) { if (x == 1) { print x; } }   }} print x; ", "program")
+        # term = parser.parse("var a = 1; var b = 1; var c = 1 ; var d = 1 ; var e = 1 ; var f = 1 ; if (a ==1 && b == 1 && c ==1 && d ==1  && e ==1 && f ==1){ print 1; }", "program")
 
         # interpreter.execute(term)
-        print(term.to_string())
+        # print(term.to_string())
 
 
 
