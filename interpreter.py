@@ -203,11 +203,12 @@ class Interpreter:
         return
 
     def __execute_while_statement(self, node):
-        conditional = self.__eval(node.children[0])
-        while self.__eval(conditional):
+        condition = (node.children[0])
+        while self.__eval(condition):
             self.__push_env()
             self.__execute(node.children[1])
             self.__pop_env()
+
 
     def __eval_plus(self, node):
         left_sum = self.__eval(node.children[0])
