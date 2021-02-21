@@ -104,8 +104,12 @@ class Interpreter:
                 return self.__eval_less_than(node)
             elif node.type == ">":
                 return self.__eval_greater_than(node)
-
-
+            elif node.type == "&&":
+                return self.__eval_and_statement(node)
+            elif node.type == "||":
+                return self.__eval_or_statement(node)
+            else:
+                raise ValueError("unknown eval type")
         except ValueError as error:
             raise error
 # add a method here to get a var
@@ -286,6 +290,23 @@ class Interpreter:
             return True
         return False
 
+
+    def __eval_and_statement(self, node):
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs and rhs:
+            return True
+        return False
+
+
+    def __eval_or_statement(self, node):
+        lhs = self.__eval(node.children[0])
+        rhs = self.__eval(node.children[1])
+        if lhs or rhs:
+            return True
+        return False
+
+# diudnt add and or OR
 
 # CREATE a varloc that returns the env and the lookup should return the env
 

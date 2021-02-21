@@ -122,3 +122,6 @@
 
 # var a = 1; var b = 1; var c = 1 ; var d = 1 ; var e = 1 ; var f = 1 ; if ((a ==1 && b == 1) && (c ==1 && d ==1 ) && (e ==1 && f ==1)){ print 1; }
 
+# term = parser.parse("var x = 1; if (x == 1){ var x = 2; print x;} print x; ", "program")  #DONE
+#         term = parser.parse("var a = 1; var b = 1; var c = 1 ; var d =
+#                 term = parser.parse("if (10 > 2 == 1){ print 1; }", "program")1 ; var e = 1 ; var f = 1 ; if (a ==1 && b == 1 || c ==1 && d ==1  || e ==1 && f ==1){ print 1; }", "program")
