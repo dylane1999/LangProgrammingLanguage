@@ -352,7 +352,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
             if op_space != self.FAIL:
                 index = op_space.index
-            operator = self.__parse(string,index, "add_sub_operator")
+            operator = self.__parse(string,index, "mult_div_operator")
             if operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -886,10 +886,12 @@ class Parser:
         interpreter = Interpreter()
 
 
-        term = parser.parse("var x = 0; x = x + 1; print x;", "program")  # 6
+        # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
+        # term = parser.parse("var x = 2; if(x==1){ var x = 0; while(x<5){ print x; x = x + 1; } } else{ var x = 0; while(x<5){ print x; x = x + 1; }}", "program")  # 6
+        term = parser.parse("if(){print 5;}", "program")  # 6
+
         print(term.to_string())
         interpreter.execute(term)
-
 
 
 
