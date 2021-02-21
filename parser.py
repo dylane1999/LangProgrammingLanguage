@@ -379,7 +379,7 @@ class Parser:
         if string[index] == "+":
             return Parse("+", index +1)
         elif string[index] == "-":
-            return Parse("+", index +1)
+            return Parse("-", index +1)
         else:
             return self.FAIL
 
@@ -560,7 +560,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")
         if op_space != self.FAIL:
             index = op_space.index  # if optional space then add to index
-        if string[index] != ";":
+        if index >= len(string) or string[index] != ";":
             return self.FAIL  #  check for the ; end char
         index += 1  # add one index for the semi colon
         assignment_parse = StatementParse(index, "assign")
@@ -878,6 +878,7 @@ class Parser:
         while_statement.children.append(qualifying_expression)
         while_statement.children.append(program)
         return while_statement
+        return while_statement
 
 
 
@@ -888,10 +889,11 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var x = 2; if(x==1){ var x = 0; while(x<5){ print x; x = x + 1; } } else{ var x = 0; while(x<5){ print x; x = x + 1; }}", "program")  # 6
-        term = parser.parse("if(){print 5;}", "program")  # 6
+        term = parser.parse(" # This is testing order of operations and making sure that the division is done before the subtraction. \n  print 2 + 16 - 8 / 2;\n", "program")  # 6
 
         print(term.to_string())
-        interpreter.execute(term)
+        x = interpreter.execute(term)
+        print(x)
 
 
 

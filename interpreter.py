@@ -25,7 +25,8 @@ class Interpreter:
 
 
     def execute(self, node):
-        self.__execute(node)
+        x = self.__execute(node)
+        return x
 
 
 
@@ -116,7 +117,7 @@ class Interpreter:
 
     def __execute_program(self, program):
         for node in program.children:
-            self.__execute(node)
+            return self.__execute(node)
 
 
     def __execute_print(self, node):
@@ -125,7 +126,7 @@ class Interpreter:
         #     print(expression.variable_map[node.children[0].value])  # get the value out of the correct env
         #     return
         print(expression)
-        return
+        return expression
 
 
         #
