@@ -878,7 +878,6 @@ class Parser:
         while_statement.children.append(qualifying_expression)
         while_statement.children.append(program)
         return while_statement
-        return while_statement
 
 
 
