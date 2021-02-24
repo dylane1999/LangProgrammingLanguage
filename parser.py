@@ -185,6 +185,12 @@ class Parser:
             return self.__parse_add_sub_operator(string, index)
         elif term == "mult_div_operator":
             return self.__parse_mult_div_operator(string, index)
+        elif term == "parameters":
+            return self.__parse_parameters(string, index)
+        elif term == "function":
+            return self.__parse_function(string, index)
+        elif term == "op_close_paren":
+            return self.__parse_optional_close_paren(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -193,6 +199,9 @@ class Parser:
 
     def __parse_operand(self, string, index):
         parse = self.__parse(string, index, "parenthesis")
+        if parse != self.FAIL:
+            return parse
+        parse = self.__parse(string, index, "function")
         if parse != self.FAIL:
             return parse
         parse = self.__parse(string, index, "identifier")
@@ -402,7 +411,7 @@ class Parser:
             index = space_parse.index  # if parse of spaces was success add to index
         if string[index] != '(':  # check if the string starts with open parenthesis
             return self.FAIL
-        parse = self.__parse(string, index + 1, "add|sub")  # parses the addition string inside the parenthesis
+        parse = self.__parse(string, index + 1, "expression")  # parses the expression inside the parenthesis
         if parse == self.FAIL:  # if addition is not in grammar fails
             return self.FAIL
         if string[parse.index] != ")":  # checks char at end of addition string, if not a close paren, then fail
@@ -879,6 +888,106 @@ class Parser:
         while_statement.children.append(program)
         return while_statement
 
+    def __parse_function(self, string, index):
+        func_keyword = string[index:index + 4]
+        if func_keyword != "func":  # if doesn't start with func then fail
+            return self.FAIL
+        index += 4  # add 4 for func
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != "(":  # if no open paren, fail
+            return self.FAIL
+        index += 1 # add 1 for paren
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        params_parse = self.__parse(string,index, "parameters")  # parse program parameters
+        index = params_parse.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != ")":
+            return self.FAIL  # check for close paren
+        index += 1  # add one for paren
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != "{":
+            return self.FAIL  # check for open curly brace
+        index += 1  # add one for curly brace
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        program_parse = self.__parse(string, index, "program")
+        if program_parse == self.FAIL:  # parse program, add to index
+            return self.FAIL
+        index = program_parse.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != "}":
+            return self.FAIL  # check for close curly brace
+        index += 1  # add one for curly brace
+        function_parse = StatementParse(index,"function" )
+        function_parse.children.append(params_parse)  # add params to children
+        function_parse.children.append(program_parse) # add programs in funct to children
+        return function_parse
+
+
+
+    def __parse_parameters(self, string, index):
+        parameters_parse = StatementParse(index, "parameters")  # decalre statement
+        identifier_parse = self.__parse(string,index, "identifier")  # parse identifier
+        if identifier_parse != self.FAIL:
+            index = identifier_parse.index  # add indentifier to index
+            parameters_parse.children.append(identifier_parse)
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        parse = None
+        while index < len(string) and parse != self.FAIL:
+            if string[index] != ",":  # if no , break
+                parse = self.FAIL
+                break
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            identifier_parse = self.__parse(string, index, "identifier")  # parse identifier
+            if identifier_parse == self.FAIL:
+                parse = self.FAIL
+                break
+            index = identifier_parse.index  # add identifier to index
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            parameters_parse.children.append(identifier_parse)  # add the identifier to args
+        return parameters_parse  # get all params and return
+
+
+
+
+    def __parse_optional_close_paren(self, string, index):
+        parsed = ""
+        if string[index] == ")":
+            return Parse(")", index +1)
+        else:
+            return Parse("", index)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     def test(self):
@@ -887,8 +996,7 @@ class Parser:
 
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
-        # term = parser.parse("var x = 2; if(x==1){ var x = 0; while(x<5){ print x; x = x + 1; } } else{ var x = 0; while(x<5){ print x; x = x + 1; }}", "program")  # 6
-        term = parser.parse(" # This is testing order of operations and making sure that the division is done before the subtraction. \n  print 2 + 16 - 8 / 2;\n", "program")  # 6
+        term = parser.parse("var x = func(){ print 1; }; } ", "program")  # 6
 
         print(term.to_string())
         x = interpreter.execute(term)

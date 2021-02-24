@@ -1,6 +1,8 @@
 
 # pycharm stuff
 .idea
+
+#vscode
 .vscode
   
 # Byte-compiled / optimized / DLL files
