@@ -25,8 +25,8 @@ class Interpreter:
 
 
     def execute(self, node):
-        x = self.__execute(node)
-        return x
+        self.__execute(node)
+
 
 
 
@@ -117,7 +117,7 @@ class Interpreter:
 
     def __execute_program(self, program):
         for node in program.children:
-            return self.__execute(node)
+             self.__execute(node)
 
 
     def __execute_print(self, node):
@@ -155,7 +155,7 @@ class Interpreter:
         if self.__check_forbidden_names(variable_name):
             raise ValueError("forbidden variable name")  # check for exceptions on variable name
         self.environment.variable_map[variable_name] = self.__eval(node.children[1])
-        return
+        # return
 
 
 
