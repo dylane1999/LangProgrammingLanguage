@@ -191,6 +191,12 @@ class Parser:
             return self.__parse_function(string, index)
         elif term == "op_close_paren":
             return self.__parse_optional_close_paren(string, index)
+        elif term == "arguments":
+            return self.__parse_arguments(string, index)
+        elif term == "function_call":
+            return self.__parse_function_call(string, index)
+        elif term == "call_expression":
+            return self.__parse_call_expression(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -965,14 +971,88 @@ class Parser:
         return parameters_parse  # get all params and return
 
 
-
-
     def __parse_optional_close_paren(self, string, index):
         parsed = ""
         if string[index] == ")":
             return Parse(")", index +1)
         else:
             return Parse("", index)
+
+
+    def __parse_call_expression(self, string, index):
+        operand_parse = self.__parse(string, index, "operand")
+        if operand_parse == self.FAIL:
+            return self.FAIL
+        index = operand_parse.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        function_call_parse = self.__parse(string, index, "function_call")
+        if function_call_parse == self.FAIL:
+            return self.FAIL
+        index = function_call_parse.index
+        call_expression = StatementParse(index, "call_expresssion")
+        call_expression.children.append(operand_parse)  # add the function name as child 0
+        call_expression.children.append(function_call_parse)  # add the function arguments
+        return call_expression
+        
+
+
+
+
+    def __parse_function_call(self, string, index):
+        if string[index] != "(":
+            return self.FAIL
+        index +=1
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        arguments_parse = self.__parse(string, index, "arguments")  # get func arguments
+        index = arguments_parse.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != ")":
+            return self.FAIL
+        index +=1
+        function_call = StatementParse(index, "function_arguments")
+        function_call.children.append(arguments_parse.children)  # append arguments children as fucntion args
+        return function_call
+
+
+
+    def __parse_arguments(self, string, index):
+        argument_parse = StatementParse(index, "arguments")
+        expression_parse = self.__parse(string, index, "expression")
+        if expression_parse != self.FAIL:
+            index = expression_parse
+            argument_parse.children.append(expression_parse)  # if there was an argument add to children
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        parse = None  # declare parse
+        while index < len(string) and parse != self.FAIL:
+            if string[index] != ",":
+                parse = self.FAIL
+                break
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            expression_parse = self.__parse(string, index, "expression")
+            if expression_parse == self.FAIL:
+                parse = self.FAIL
+                break
+            index = expression_parse
+            argument_parse.children.append(expression_parse)
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+        return argument_parse
+
+
+
+
+
 
 
 
