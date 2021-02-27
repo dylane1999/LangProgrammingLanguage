@@ -219,10 +219,10 @@ class Parser:
             return self.__parse_function_call(string, index)
         elif term == "call_expression":
             return self.__parse_call_expression(string, index)
+        elif term == "return_statement":
+            return self.__parse_return_statement(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
-
-        __parse_and_expression
 
 
     def __parse_operand(self, string, index):
@@ -470,27 +470,30 @@ class Parser:
         return program  # return the program
 
     def __parse_statement(self, string, index):
-        parse = self.__parse(string, index, "declaration_statement")  # try to parse declare statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "assignment_statement")  # try to parse for assign statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "if_else_statement")  # try to parse for if_else statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "if_statement")  # try to parse for if statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "while_statement")  # try to parse for while statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "print_statement")  # try to parse for print statement
-        if parse != self.FAIL:
-            return parse
-        parse = self.__parse(string, index, "expression_statement")  # try to parse for expression
-        if parse != self.FAIL:
-            return parse
+        declare_parse = self.__parse(string, index, "declaration_statement")  # try to parse declare statement
+        if declare_parse != self.FAIL:
+            return declare_parse
+        assign_parse = self.__parse(string, index, "assignment_statement")  # try to parse for assign statement
+        if assign_parse != self.FAIL:
+            return assign_parse
+        if_else_parse = self.__parse(string, index, "if_else_statement")  # try to parse for if_else statement
+        if if_else_parse != self.FAIL:
+            return if_else_parse
+        if_parse = self.__parse(string, index, "if_statement")  # try to parse for if statement
+        if if_parse != self.FAIL:
+            return if_parse
+        while_parse = self.__parse(string, index, "while_statement")  # try to parse for while statement
+        if while_parse != self.FAIL:
+            return while_parse
+        return_parse = self.__parse(string, index, "return_statement")  # try to parse for while statement
+        if return_parse != self.FAIL:
+            return return_parse
+        print_parse = self.__parse(string, index, "print_statement")  # try to parse for print statement
+        if print_parse != self.FAIL:
+            return print_parse
+        expression_parse = self.__parse(string, index, "expression_statement")  # try to parse for expression
+        if expression_parse != self.FAIL:
+            return expression_parse
         return self.FAIL  # if no expression or print then fail
 
     def __parse_expression(self, string, index):
@@ -524,7 +527,7 @@ class Parser:
         parse = self.__parse(string, index, "req_space")  # parse the required one space or newline
         if parse == self.FAIL:
             return self.FAIL
-        index +=1  # add one for req space
+        index = parse.index  # add index for req space
         expression_parse = self.__parse(string, index, "expression")  # parse for the expression
         if expression_parse == self.FAIL:
             return self.FAIL
@@ -1086,6 +1089,29 @@ class Parser:
         return argument_parse
 
 
+    def __parse_return_statement(self, string, index):
+        ret_key = string[index:index+3]
+        if ret_key != "ret":  # check for return key and add to index
+            return self.FAIL
+        index += 3
+        req_space = self.__parse(string, index, "req_space")
+        if req_space == self.FAIL:  # if no req_space fail
+            return self.FAIL
+        index = req_space.index
+        expression_parse = self.__parse(string,index, "expression")
+        if expression_parse == self.FAIL:
+            return self.FAIL
+        index = expression_parse.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != ";":
+            return self.FAIL
+        index += 1
+        return_statement = StatementParse(index, "return")
+        return_statement.children.append(expression_parse)
+        return return_statement
+
 
 
 
@@ -1115,7 +1141,7 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse("var printer = func(n){ print n+1; }; printer(42);", "program")  # 6
+        term = parser.parse(" var x = 5; var printer = func(n){ print n+1; ret 5;}; x = printer(42); print x;", "program")  # 6
 #var printer = func(n){ print n+1; };
         #printer(42);
         print(term.to_string())
