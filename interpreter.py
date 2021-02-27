@@ -1,19 +1,24 @@
-
-
+from copy import deepcopy
 
 
 class Interpreter:
     def __init__(self):
         self.environment = self.Environment({}, None)
+        self.function_call_depth = 0
+        self.return_value = 0
+        self.isReturning = False
 
+    class Closure:
+        def __init__(self, parse, environment, parameters):
+            self.parse = parse
+            self.environment = environment
+            self.parameters = parameters
 
     class Environment:
 
         def __init__(self, variable_map, previous_env):
             self.variable_map = variable_map
             self.previous_env = previous_env
-
-
 
     def __push_env(self):
         new_env = self.Environment({}, self.environment)  # declare new env with previous of current env
@@ -23,13 +28,10 @@ class Interpreter:
         previous_env = self.environment.previous_env  # get previous
         self.environment = previous_env  # set previous to current env
 
-
     def execute(self, node):
         self.__execute(node)
 
-
-
-
+    # FIXME implement eval functioin eval function all implemetn a closute class, return eval
 
     def __execute(self, node):
         try:
@@ -68,14 +70,17 @@ class Interpreter:
                     self.__execute_while_statement(node)
                 except ValueError as error:
                     raise error
+            elif node.type == "return":
+                try:
+                    self.__execute_return(node)
+                except ValueError as error:
+                    raise error
             else:
                 self.__eval(node)
 
         except ValueError as error:
             print(error)
             raise SystemExit
-
-
 
     def __eval(self, node):
         try:
@@ -109,41 +114,41 @@ class Interpreter:
                 return self.__eval_and_statement(node)
             elif node.type == "||":
                 return self.__eval_or_statement(node)
+            elif node.type == "function":
+                return self.__eval_function(node)
+            elif node.type == "call":
+                return self.__eval_function_call(node)
             else:
                 raise ValueError("unknown eval type")
         except ValueError as error:
             raise error
-# add a method here to get a var
+
+    # add a method here to get a var
 
     def __execute_program(self, program):
         for node in program.children:
-             self.__execute(node)
+            if self.isReturning:
+                break
+            self.__execute(node)
+
+
+    def __execute_return(self, node):
+        if self.function_call_depth <= 0:
+            raise ValueError("can not return outside of a function")
+        return_value = self.__eval(node.children[0])
+        self.isReturning = True
+        self.return_value = return_value
 
 
     def __execute_print(self, node):
         expression = self.__eval(node.children[0])
-        # if isinstance(expression, self.Environment):
-        #     print(expression.variable_map[node.children[0].value])  # get the value out of the correct env
-        #     return
         print(expression)
         return expression
 
-
-        #
-        # y = self.__eval(x)
-        # lookup = node.children[0]
-        # env = self.__eval(lookup)
-        # result = env.variable_map[lookup.value]  # get the value out of the correct env
-        # print(result)
-        # return str(result)
-
     def __execute_assignment_statement(self, node):
-        lookup = node.children[0] # get the lookup
+        lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
         env.variable_map[lookup.value] = self.__eval(node.children[1])  # set the var in the env = to the expression
-
-
-
 
     def __execute_declaration_statement(self, node):
         # eval things on the right side of the equation
@@ -157,44 +162,12 @@ class Interpreter:
         self.environment.variable_map[variable_name] = self.__eval(node.children[1])
         # return
 
-
-
-    def __eval_varloc(self, node):
-        variable_name = node.value
-        env = self.environment
-        result_env = None
-        while result_env is None:
-            if variable_name in env.variable_map.keys():
-                result_env = env
-                break
-            env = env.previous_env
-
-        return result_env
-
-
-    def __eval_lookup(self, node):
-        variable_name = node.value
-        env = self.environment
-        result_env = None
-        while (result_env is None) and (env is not None):
-            if variable_name in env.variable_map.keys():
-                result_env = env
-                break
-            env = env.previous_env
-        if env is None:
-            raise ValueError("variable not defined")
-        result_value = result_env.variable_map[variable_name]
-        return result_value
-    # throw an error in here if there is no value
-
-    # Eval lookup should return the env that the variable is in
-
     def __execute_if_statement(self, node):
         conditional = self.__eval(node.children[0])
         if conditional:
             self.__push_env()  # add an env on stack
             self.__execute(node.children[1])
-            self.__pop_env()  #  pop env from the stack
+            self.__pop_env()  # pop env from the stack
         return
 
     def __execute_if_else_statement(self, node):
@@ -214,6 +187,69 @@ class Interpreter:
             self.__execute(node.children[1])
             self.__pop_env()
 
+    def __eval_function(self, node):
+        current_env = self.environment  # copy the current env
+        function_params = node.children[0].children
+        params_array = []
+        for param in function_params:
+            params_array.append(param.value)
+        function_closure = self.Closure(node, current_env, params_array)
+        return function_closure
+
+    def __eval_function_call(self, node):
+        self.function_call_depth += 1  # set current depth plus one
+        function_name = node.children[0].value
+        try:
+            closure = self.environment.variable_map.get(function_name)  # get the closure from the env
+        except:
+            raise ValueError("undefined function")
+        arguments = node.children[1].children
+        evaluated_args = []
+        for arg in arguments:
+            evaluated_args.append(self.__eval(arg))
+        current_env = self.environment
+        self.environment = closure.environment  # set the current env to the closure env
+        self.__push_env()  # push a new env on stack
+        # check that the len of closure params and call args are the same
+        if len(closure.parameters) != len(evaluated_args):
+            raise ValueError("incorrect number of arguments")
+        for i in range(len(closure.parameters)):
+            self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
+        function_program = closure.parse.children[1]
+        execute_result = self.__execute(function_program)  # execute the IR tree of the function
+        self.__pop_env()
+        self.environment = current_env  # set the env back to the current env
+        return_value = self.return_value
+        self.return_value = 0  # set return value back
+        self.isReturning = False
+        self.function_call_depth -= 1  # decrease function depth by one
+        return return_value #return 0 or the return value
+
+    def __eval_varloc(self, node):
+        variable_name = node.value
+        env = self.environment
+        result_env = None
+        while result_env is None:
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+
+        return result_env
+
+    def __eval_lookup(self, node):
+        variable_name = node.value
+        env = self.environment
+        result_env = None
+        while (result_env is None) and (env is not None):
+            if variable_name in env.variable_map.keys():
+                result_env = env
+                break
+            env = env.previous_env
+        if env is None:
+            raise ValueError("variable not defined")
+        result_value = result_env.variable_map[variable_name]
+        return result_value
 
     def __eval_plus(self, node):
         left_sum = self.__eval(node.children[0])
@@ -235,7 +271,6 @@ class Interpreter:
         quotient = left_divide // right_divide
         return quotient
 
-
     def __eval_mult(self, node):
         left_mult = self.__eval(node.children[0])
         right_mult = self.__eval(node.children[1])
@@ -245,15 +280,12 @@ class Interpreter:
     def __eval_int(self, node):
         return node.value
 
-    #for each comparison type I will have to eval both sides and return a boolean if they meet the specied type
-
     def __eval_equals(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
         if lhs == rhs:
             return True
         return False
-
 
     def __eval_not_equals(self, node):
         lhs = self.__eval(node.children[0])
@@ -268,7 +300,6 @@ class Interpreter:
         if lhs < rhs:
             return True
         return False
-
 
     def __eval_greater_than(self, node):
         lhs = self.__eval(node.children[0])
@@ -291,7 +322,6 @@ class Interpreter:
             return True
         return False
 
-
     def __eval_and_statement(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
@@ -299,23 +329,12 @@ class Interpreter:
             return True
         return False
 
-
     def __eval_or_statement(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
         if lhs or rhs:
             return True
         return False
-
-# diudnt add and or OR
-
-# CREATE a varloc that returns the env and the lookup should return the env
-
-
-
-
-    ##eval all conditonals
-
 
     def __check_forbidden_names(self, string):
         if string == "print":
