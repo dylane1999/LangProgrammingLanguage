@@ -18,6 +18,8 @@ class Parse:
         return 'Parse(value={}, index{})'.format(self.value, self.index)
 
 
+
+
 class IntergerParse():
 
     def __init__(self, value, index):
@@ -77,6 +79,26 @@ class DeclareLocationParse(IdentifierParse):  # should have a type of varloc  (d
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
         self.value = value
+
+    def to_string(self):
+        result = self.value
+        return result
+
+
+
+class ArgumentsParse(IdentifierParse):  # should have a type of varloc  (declare)
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+        self.value = value
+
+    def to_string(self):
+        result = self.value
+        return result
+
+
+class ParametersParse(IdentifierParse):  # should have a type of varloc  (declare)
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
 
     def to_string(self):
         result = self.value
@@ -357,7 +379,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
         if op_space != self.FAIL:
             index = op_space.index
-        left_parse = self.__parse(string, index, "operand")  # parses the int at start of expression
+        left_parse = self.__parse(string, index, "call_expression")  # parses the int at start of expression
         if left_parse == self.FAIL:
             return self.FAIL
         index = left_parse.index  # if not fail add result & index
@@ -375,7 +397,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
             if op_space != self.FAIL:
                 index = op_space.index
-            right_parse = self.__parse(string, index, "operand")  # parse next operand; index +1 for "* | /"
+            right_parse = self.__parse(string, index, "call_expression")  # parse next operand; index +1 for "* | /"
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
@@ -484,6 +506,7 @@ class Parser:
         parse = self.__parse(string, index, "expression")
         if parse == self.FAIL:
             return self.FAIL
+        index = parse.index
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
         parse.index += 1 # add one index for the semi colon
@@ -935,19 +958,20 @@ class Parser:
         if string[index] != "}":
             return self.FAIL  # check for close curly brace
         index += 1  # add one for curly brace
-        function_parse = StatementParse(index,"function" )
+        function_parse = StatementParse(index, "function")
         function_parse.children.append(params_parse)  # add params to children
-        function_parse.children.append(program_parse) # add programs in funct to children
+        function_parse.children.append(program_parse)  # add programs in funct to children
         return function_parse
 
 
 
     def __parse_parameters(self, string, index):
-        parameters_parse = StatementParse(index, "parameters")  # decalre statement
+        all_parameters_parse = StatementParse(index, "parameters")  # decalre statement
         identifier_parse = self.__parse(string,index, "identifier")  # parse identifier
         if identifier_parse != self.FAIL:
             index = identifier_parse.index  # add indentifier to index
-            parameters_parse.children.append(identifier_parse)
+            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters") # create param parse
+            all_parameters_parse.children.append(param_parse)
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -956,6 +980,7 @@ class Parser:
             if string[index] != ",":  # if no , break
                 parse = self.FAIL
                 break
+            index += 1  # add one for ,
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
@@ -967,8 +992,10 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            parameters_parse.children.append(identifier_parse)  # add the identifier to args
-        return parameters_parse  # get all params and return
+            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters")  # create param parse
+            all_parameters_parse.children.append(param_parse)  # add the identifier to args
+        all_parameters_parse.index = index  # set param index to index
+        return all_parameters_parse  # get all params and return
 
 
     def __parse_optional_close_paren(self, string, index):
@@ -984,18 +1011,25 @@ class Parser:
         if operand_parse == self.FAIL:
             return self.FAIL
         index = operand_parse.index
-        op_space = self.__parse(string, index, "op_space")  # parse optional space
-        if op_space != self.FAIL:
-            index = op_space.index  # add op_space to index
-        function_call_parse = self.__parse(string, index, "function_call")
-        if function_call_parse == self.FAIL:
-            return self.FAIL
-        index = function_call_parse.index
-        call_expression = StatementParse(index, "call_expresssion")
-        call_expression.children.append(operand_parse)  # add the function name as child 0
-        call_expression.children.append(function_call_parse)  # add the function arguments
+        call_expression = StatementParse(index, "call")
+        call_expression.children.append(operand_parse)  # a_exprdd the function name as child 0
+        parse = None
+        while index < len(string) and parse != self.FAIL:
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            function_call_parse = self.__parse(string, index, "function_call")
+            if function_call_parse == self.FAIL:
+                parse = self.FAIL
+                break
+            index = function_call_parse.index
+            call_expression.children.append(function_call_parse)  # add the function arguments
+        call_expression.index = index  # set call exp index to index
+        if len(call_expression.children) <= 1:  # no additional children
+            operand_parse.index = index
+            return operand_parse
         return call_expression
-        
+
 
 
 
@@ -1015,8 +1049,8 @@ class Parser:
         if string[index] != ")":
             return self.FAIL
         index +=1
-        function_call = StatementParse(index, "function_arguments")
-        function_call.children.append(arguments_parse.children)  # append arguments children as fucntion args
+        function_call = StatementParse(index, "arguments")
+        function_call.children = arguments_parse.children  # set function call children to args children
         return function_call
 
 
@@ -1025,7 +1059,7 @@ class Parser:
         argument_parse = StatementParse(index, "arguments")
         expression_parse = self.__parse(string, index, "expression")
         if expression_parse != self.FAIL:
-            index = expression_parse
+            index = expression_parse.index
             argument_parse.children.append(expression_parse)  # if there was an argument add to children
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -1035,6 +1069,7 @@ class Parser:
             if string[index] != ",":
                 parse = self.FAIL
                 break
+            index += 1  # add one for comma
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
@@ -1047,6 +1082,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
+        argument_parse.index = index  # add index to arg parse
         return argument_parse
 
 
@@ -1075,9 +1111,13 @@ class Parser:
         interpreter = Interpreter()
 
 
-        # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
-        term = parser.parse("var x = func(){ print 1; }; } ", "program")  # 6
 
+
+        # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
+        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
+        term = parser.parse("var printer = func(n){ print n+1; }; printer(42);", "program")  # 6
+#var printer = func(n){ print n+1; };
+        #printer(42);
         print(term.to_string())
         x = interpreter.execute(term)
         print(x)
