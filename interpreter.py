@@ -198,11 +198,17 @@ class Interpreter:
 
     def __eval_function_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
-        function_name = node.children[0].value
-        try:
+        # FIXME evaluate child[0] - the first
+        if node.children[0].type == "call":   # if child is a call eval call to get closure
+            closure = self.__eval(node.children[0])
+        else:
+            function_name = node.children[0].value  # if child is not a call get the func name from identifier child
             closure = self.environment.variable_map.get(function_name)  # get the closure from the env
-        except:
+
+        if closure is None:
             raise ValueError("undefined function")
+        # if isinstance()
+        # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
         evaluated_args = []
         for arg in arguments:
@@ -217,7 +223,7 @@ class Interpreter:
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
         function_program = closure.parse.children[1]
         execute_result = self.__execute(function_program)  # execute the IR tree of the function
-        self.__pop_env()
+        self.__pop_env()  
         self.environment = current_env  # set the env back to the current env
         return_value = self.return_value
         self.return_value = 0  # set return value back
