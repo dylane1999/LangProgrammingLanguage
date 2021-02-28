@@ -1091,7 +1091,7 @@ class Parser:
             if expression_parse == self.FAIL:
                 parse = self.FAIL
                 break
-            index = expression_parse
+            index = expression_parse.index
             argument_parse.children.append(expression_parse)
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
@@ -1152,7 +1152,11 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse("var a = 1; var outer = func(){ var a = 2; var inner = func(){print a;}; ret inner; }; outer()(); ", "program")  # test for function insdie of a dunction
+        term = parser.parse("var sum = func(a,b){ var c = a + b; ret c; };  print sum; ", "program")  # test for function insdie of a dunction
+        # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
+
+        # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
+
         print(term.to_string())
         x = interpreter.execute(term)
         #  ret inner;

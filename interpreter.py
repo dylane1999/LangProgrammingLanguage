@@ -142,6 +142,9 @@ class Interpreter:
 
     def __execute_print(self, node):
         expression = self.__eval(node.children[0])
+        if isinstance(expression, self.Closure):
+            print("closure")
+            return "closure"
         print(expression)
         return expression
 
