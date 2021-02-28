@@ -51,6 +51,15 @@ class StatementParse():  # fixme operation parse
         return expression_result
 
 
+class CallExpression(StatementParse):  # fixme operation parse
+
+    def __init__(self, index, type, func_name):
+        super().__init__(index, type)
+        self.children = []
+        self.func_name = func_name
+
+
+
 class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an identifer
     def __init__(self, value, index, type):
         super().__init__(index, type)
@@ -1014,9 +1023,9 @@ class Parser:
         if operand_parse == self.FAIL:
             return self.FAIL
         index = operand_parse.index
-        call_expression = StatementParse(index, "call")
-        call_expression.children.append(operand_parse)  # a_exprdd the function name as child 0
+        parent = None
         parse = None
+        lhs = operand_parse
         while index < len(string) and parse != self.FAIL:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
@@ -1025,13 +1034,15 @@ class Parser:
             if function_call_parse == self.FAIL:
                 parse = self.FAIL
                 break
-            index = function_call_parse.index
-            call_expression.children.append(function_call_parse)  # add the function arguments
-        call_expression.index = index  # set call exp index to index
-        if len(call_expression.children) <= 1:  # no additional children
-            operand_parse.index = index
+            index = function_call_parse.index  # set index to funct call parse
+            parent = CallExpression(index, "call", operand_parse.value)
+            parent.children.append(lhs)
+            parent.children.append(function_call_parse)  # add the function arguments
+            lhs = parent
+        if parent is None:
             return operand_parse
-        return call_expression
+        parent.index = index  # set call exp index to index
+        return parent
 
 
 
@@ -1141,15 +1152,13 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse(" var x = 5; var printer = func(n){ print n+1; ret 5;}; x = printer(42); print x;", "program")  # 6
-#var printer = func(n){ print n+1; };
-        #printer(42);
+        term = parser.parse("var a = 1; var outer = func(){ var a = 2; var inner = func(){print a;}; ret inner; }; outer()(); ", "program")  # test for function insdie of a dunction
         print(term.to_string())
         x = interpreter.execute(term)
-        print(x)
+        #  ret inner;
 
 
-
+#  var a = 1; var outer = func(){ var a = 2; var inner = func(){ print a;}; ret inner ; };
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
     assert actual is not None, 'Got None when parsing "{}"'.format(string)
