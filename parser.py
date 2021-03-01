@@ -139,7 +139,11 @@ class Parser:
     FAIL = Parse(0, -1)
 
     def parse(self, string, term):
-        return self.__parse(string, 0, term)
+        try:
+            return self.__parse(string, 0, term)
+        except ValueError as error:
+            print(error)
+            return None
 
     def __parse(self, string, index, term):  # main parse wrapper that calls each item to be parsed @each index
         if index >= len(string):
