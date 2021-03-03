@@ -25,7 +25,7 @@ class IntergerParse():
         self.index = index
         self.type = "int"
 
-    def to_string(self):
+    def __str__(self):
         # return the value casted to string
         return str(self.value)
 
@@ -37,13 +37,13 @@ class StatementParse():  # fixme operation parse
         self.type = type
         self.children = []
 
-    def to_string(self):
+    def __str__(self):
         # if statement parse print the operator type and children to string
         expression_result = ""
         expression_result += "("
         expression_result += self.type
         for child in self.children:
-            expression_result += " " + child.to_string()
+            expression_result += " " + child.__str__()
         expression_result += ")"
         return expression_result
 
@@ -61,7 +61,7 @@ class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an 
         super().__init__(index, type)
         self.value = value
 
-    def to_string(self):
+    def __str__(self):
         # return the value + varloc
         result = self.value
         result = "(" + self.type + " " + self.value + ")"
@@ -73,7 +73,7 @@ class AssignLocationParse(IdentifierParse):  # should have a type of varloc  (as
         super().__init__(value, index, type)
         self.value = value
 
-    def to_string(self):
+    def __str__(self):
         # return the value + varloc
         result = "(" + self.type + " " + self.value + ")"
         return result
@@ -84,7 +84,7 @@ class DeclareLocationParse(IdentifierParse):  # should have a type of varloc  (d
         super().__init__(value, index, type)
         self.value = value
 
-    def to_string(self):
+    def __str__(self):
         result = self.value
         return result
 
@@ -94,7 +94,7 @@ class ArgumentsParse(IdentifierParse):  # should have a type of varloc  (declare
         super().__init__(value, index, type)
         self.value = value
 
-    def to_string(self):
+    def __str__(self):
         result = self.value
         return result
 
@@ -103,7 +103,7 @@ class ParametersParse(IdentifierParse):  # should have a type of varloc  (declar
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
 
-    def to_string(self):
+    def __str__(self):
         result = self.value
         return result
 
@@ -115,12 +115,12 @@ class ProgramParse():
         self.type = "program"
         self.children = []
 
-    def to_string(self):
+    def __str__(self):
         expression_result = ""
         expression_result += "("
         expression_result += "sequence"
         for child in self.children:
-            expression_result += " " + child.to_string()
+            expression_result += " " + child.__str__()
         expression_result += ")"
         return expression_result
 
@@ -1109,7 +1109,7 @@ bar();
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
 
-        print(term.to_string())
+        print(term.__str__())
         x = interpreter.execute(term)
         #  ret inner;
 
