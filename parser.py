@@ -1,5 +1,5 @@
+from interpreter import Interpreter
 
-from interpreter import  Interpreter
 
 class Parse:
 
@@ -18,8 +18,6 @@ class Parse:
         return 'Parse(value={}, index{})'.format(self.value, self.index)
 
 
-
-
 class IntergerParse():
 
     def __init__(self, value, index):
@@ -30,7 +28,6 @@ class IntergerParse():
     def to_string(self):
         # return the value casted to string
         return str(self.value)
-
 
 
 class StatementParse():  # fixme operation parse
@@ -59,7 +56,6 @@ class CallExpression(StatementParse):  # fixme operation parse
         self.func_name = func_name
 
 
-
 class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an identifer
     def __init__(self, value, index, type):
         super().__init__(index, type)
@@ -83,7 +79,6 @@ class AssignLocationParse(IdentifierParse):  # should have a type of varloc  (as
         return result
 
 
-
 class DeclareLocationParse(IdentifierParse):  # should have a type of varloc  (declare)
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
@@ -92,7 +87,6 @@ class DeclareLocationParse(IdentifierParse):  # should have a type of varloc  (d
     def to_string(self):
         result = self.value
         return result
-
 
 
 class ArgumentsParse(IdentifierParse):  # should have a type of varloc  (declare)
@@ -114,9 +108,6 @@ class ParametersParse(IdentifierParse):  # should have a type of varloc  (declar
         return result
 
 
-
-
-
 class ProgramParse():
 
     def __init__(self, index, type):
@@ -132,7 +123,6 @@ class ProgramParse():
             expression_result += " " + child.to_string()
         expression_result += ")"
         return expression_result
-
 
 
 class Parser:
@@ -237,7 +227,6 @@ class Parser:
         else:
             raise AssertionError("Unexpected Term " + term)
 
-
     def __parse_operand(self, string, index):
         parse = self.__parse(string, index, "parenthesis")
         if parse != self.FAIL:
@@ -298,7 +287,6 @@ class Parser:
             return self.FAIL
         return Parse(parsed, index)
 
-
     def __parse_required_space(self, string, index):
         parsed = ""
         parse = self.__parse(string, index, "op_space")
@@ -309,17 +297,15 @@ class Parser:
             return parse
         return self.FAIL
 
-
     def __parse_comment(self, string, index):
         parsed = ""
-        #should parse until it gets to a newline
+        # should parse until it gets to a newline
         while index < len(string) and string[index] != "\n":
             parsed += string[index]
             index += 1
         if parsed == "":
             return self.FAIL
         return Parse(parsed, index)
-
 
     def __parse_space(self, string, index):
         parsed = ""
@@ -339,7 +325,6 @@ class Parser:
             return self.FAIL
         return Parse(parsed, index)
 
-
     def __parse_add_sub_expression(self, string, index):  # addition & subtraction function
         '''
         add_sub_expression   = mul_div_expression ( opt_space add_sub_operator opt_space mul_div_expression )*;
@@ -354,13 +339,13 @@ class Parser:
         if left_parse == self.FAIL:
             return self.FAIL
         index = left_parse.index
-        parent = None # declare parent
-        parse = None # declare parse to fail test
+        parent = None  # declare parent
+        parse = None  # declare parse to fail test
         while index < len(string) and parse != self.FAIL:
             space_parse = self.__parse(string, index, "op_space")  # parse spaces
             if space_parse != self.FAIL:
                 index = space_parse.index
-            operator = self.__parse(string,index, "add_sub_operator")
+            operator = self.__parse(string, index, "add_sub_operator")
             if operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -369,7 +354,7 @@ class Parser:
             if space_parse != self.FAIL:
                 index = space_parse.index
             # parses the mult expression (if no expression returns int); jumps +1 because of the " +/-"
-            right_parse = self.__parse(string, index,"mult|div")  # use left parse index (parent)
+            right_parse = self.__parse(string, index, "mult|div")  # use left parse index (parent)
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
@@ -402,7 +387,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
             if op_space != self.FAIL:
                 index = op_space.index
-            operator = self.__parse(string,index, "mult_div_operator")
+            operator = self.__parse(string, index, "mult_div_operator")
             if operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -423,21 +408,19 @@ class Parser:
             return left_parse  # if there was no expression return the left operand
         return parent
 
-
-
     def __parse_add_sub_operator(self, string, index):
         if string[index] == "+":
-            return Parse("+", index +1)
+            return Parse("+", index + 1)
         elif string[index] == "-":
-            return Parse("-", index +1)
+            return Parse("-", index + 1)
         else:
             return self.FAIL
 
     def __parse_mult_div_operator(self, string, index):
         if string[index] == "*":
-            return Parse("*", index +1)
+            return Parse("*", index + 1)
         elif string[index] == "/":
-            return Parse("/", index +1)
+            return Parse("/", index + 1)
         else:
             return self.FAIL
 
@@ -457,12 +440,12 @@ class Parser:
             return self.FAIL
         if string[parse.index] != ")":  # checks char at end of addition string, if not a close paren, then fail
             return self.FAIL
-        space_parse = self.__parse(string, parse.index + 1,"op_space")  # checks for space at end and adds to index
+        space_parse = self.__parse(string, parse.index + 1, "op_space")  # checks for space at end and adds to index
         if space_parse != self.FAIL:  # if spaces return with spaces index
             parse.index = space_parse.index
             return parse
-        parse.index +=1
-        return parse # add one index to account for close parent \ return statement parse
+        parse.index += 1
+        return parse  # add one index to account for close parent \ return statement parse
 
     def __parse_program(self, string, index):
         program = ProgramParse(index, "program")
@@ -525,7 +508,7 @@ class Parser:
         index = parse.index
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
-        parse.index += 1 # add one index for the semi colon
+        parse.index += 1  # add one index for the semi colon
         return parse
 
     def __parse_print_statement(self, string, index):
@@ -550,11 +533,10 @@ class Parser:
             index = space_parse.index
         if string[index] != ";":  # check for the ; end char
             return self.FAIL
-        index += 1 # add one index for the semi colon
+        index += 1  # add one index for the semi colon
         print_statement = StatementParse(index, "print")
         print_statement.children.append(expression_parse)
         return print_statement
-
 
     def __parse_identifier_first_char(self, string, index):
         parsed = ""
@@ -566,11 +548,10 @@ class Parser:
 
     def __parse_identifier_char(self, string, index):
         parsed = ""
-        while index < len(string) and string[index].isalnum():  # loops and adds to parsed while still alphanumeric
+        while index < len(string) and (string[index].isalnum() or string[index] == "-" or string[index] == "_"):  # loops and adds to parsed while still alphanumeric
             parsed += string[index]
-            index +=1
+            index += 1
         return Parse(parsed, index)
-
 
     def __parse_identifier(self, string, index):
         parsed = ""
@@ -583,7 +564,6 @@ class Parser:
         parsed += parse_remaining.value
         index = parse_remaining.index  # add index and value
         return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
-
 
     def __parse_location(self, string, index):
         parse_identifier = self.__parse(string, index, "identifier")
@@ -615,23 +595,22 @@ class Parser:
         if op_space != self.FAIL:
             index = op_space.index  # if optional space then add to index
         if index >= len(string) or string[index] != ";":
-            return self.FAIL  #  check for the ; end char
+            return self.FAIL  # check for the ; end char
         index += 1  # add one index for the semi colon
         assignment_parse = StatementParse(index, "assign")
         assignment_parse.children.append(var_location)
         assignment_parse.children.append(expression_parse)  # add the location & expression parse as children
         return assignment_parse
 
-
     def __parse_declaration_statement(self, string, index):
-        var = string[index:index+3]  # check for var
+        var = string[index:index + 3]  # check for var
         if var != "var":
             return self.FAIL
         index += 3  # skip to end of var
         req_space = self.__parse(string, index, "req_space")  # parse the required one space or newline
         if req_space == self.FAIL:
             return self.FAIL
-        index +=1  # add one for req space
+        index += 1  # add one for req space
         assignment_statement = self.__parse(string, index, "assignment_statement")
         if assignment_statement == self.FAIL:
             return self.FAIL  # if no assignment then fail
@@ -639,24 +618,24 @@ class Parser:
         variable = assignment_statement.children[0]  # get the variable from assignment
         expression = assignment_statement.children[1]  # get the expression from assignment (rhs)
         declaration_statement = StatementParse(index, "declare")
-        identifier = DeclareLocationParse(variable.value, variable.index, variable.type)  # make var into identifier parse
+        identifier = DeclareLocationParse(variable.value, variable.index,
+                                          variable.type)  # make var into identifier parse
         declaration_statement.children.append(identifier)
         declaration_statement.children.append(expression)  # add variable & expression as children of declare statement
         return declaration_statement
 
-
     def __parse_comp_expression(self, string, index):
-        left_expression = self.__parse(string,index, "add|sub")  # parse the lhs add|sub expression
+        left_expression = self.__parse(string, index, "add|sub")  # parse the lhs add|sub expression
         if left_expression == self.FAIL:
             return self.FAIL
         index = left_expression.index  # add lhs to index
         parent = None  # declare parent
         parse = None  # declare parse to fail test
-        while index <len(string) and parse != self.FAIL:
+        while index < len(string) and parse != self.FAIL:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            operator = self.__parse(string,index, "comp_operator")
+            operator = self.__parse(string, index, "comp_operator")
             if operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -666,7 +645,7 @@ class Parser:
                 parse = self.FAIL
                 break
             index = right_expression.index  # add right expression to index
-            parent = StatementParse(index, operator.value)  #  new statement with type of operator value
+            parent = StatementParse(index, operator.value)  # new statement with type of operator value
             parent.children.append(left_expression)
             parent.children.append(right_expression)
             left_expression = parent
@@ -674,32 +653,30 @@ class Parser:
             return left_expression  # if there was no comparison return the left expression
         return parent
 
-
     def __parse_comp_operator(self, string, index):
-        if string[index: index +2] == "==":  # bc right bound is exclusive add an extra +1
-            return Parse("==", index +2)  # return index + 2 for each char
+        if string[index: index + 2] == "==":  # bc right bound is exclusive add an extra +1
+            return Parse("==", index + 2)  # return index + 2 for each char
         elif string[index: index + 2] == "!=":
-            return Parse("!=", index +2)
+            return Parse("!=", index + 2)
         elif string[index: index + 2] == "<=":
-            return Parse("<=", index +2)
+            return Parse("<=", index + 2)
         elif string[index: index + 2] == ">=":
-            return Parse(">=", index +2)
+            return Parse(">=", index + 2)
         elif string[index: index + 1] == "<":
-            return Parse("<", index +1)  # add +1 for 1 char
+            return Parse("<", index + 1)  # add +1 for 1 char
         elif string[index: index + 1] == ">":
-            return Parse(">", index +1)
+            return Parse(">", index + 1)
         return self.FAIL  # if no operator then fail
-
 
     def __parse_not_expression(self, string, index):
         if string[index] != "!":
             return self.FAIL
         index += 1  # add one for !
-        req_space = self.__parse(string,index, "req_space")
+        req_space = self.__parse(string, index, "req_space")
         if req_space == self.FAIL:  # if no req_space fail
             return self.FAIL
         index = req_space.index
-        comp_expression = self.__parse(string,index, "comp_expression")
+        comp_expression = self.__parse(string, index, "comp_expression")
         if comp_expression == self.FAIL:
             return self.FAIL
         index = comp_expression.index  # add comp exp to index
@@ -707,8 +684,6 @@ class Parser:
         not_expression.children.append("!")
         not_expression.children.append(comp_expression)
         return not_expression
-
-
 
     def __parse_optional_not_expression(self, string, index):
         not_expression = self.__parse(string, index, "not_expression")
@@ -718,7 +693,6 @@ class Parser:
         if comp_expression != self.FAIL:
             return comp_expression
         return self.FAIL
-
 
     def __parse_and_operator(self, string, index):
         if string[index: index + 2] == "&&":
@@ -741,7 +715,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            and_operator = self.__parse(string,index, "and_operator")  # check for and operator
+            and_operator = self.__parse(string, index, "and_operator")  # check for and operator
             if and_operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -756,9 +730,8 @@ class Parser:
             parent.children.append(right_expression)
             left_expression = parent
         if parent is None:
-            return left_expression # if there was no comparison return the left expression
+            return left_expression  # if there was no comparison return the left expression
         return parent
-
 
     def __parse_or_expression(self, string, index):
         left_expression = self.__parse(string, index, "and_expression")
@@ -771,7 +744,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            or_operator = self.__parse(string,index, "or_operator")  # check for and operator
+            or_operator = self.__parse(string, index, "or_operator")  # check for and operator
             if or_operator == self.FAIL:
                 parse = self.FAIL
                 break
@@ -786,7 +759,7 @@ class Parser:
             parent.children.append(right_expression)
             left_expression = parent
         if parent is None:
-            return left_expression # if there was no comparison return the left expression
+            return left_expression  # if there was no comparison return the left expression
         return parent
 
     def __parse_if_statement(self, string, index):
@@ -799,7 +772,7 @@ class Parser:
             index = op_space.index  # add op_space to index
         if string[index] != "(":
             return self.FAIL
-        index += 1 # add index for open paren
+        index += 1  # add index for open paren
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -822,7 +795,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
-        program = self.__parse(string, index, "program")   # parse the program
+        program = self.__parse(string, index, "program")  # parse the program
         if program == self.FAIL:
             return self.FAIL
         index = program.index
@@ -837,7 +810,6 @@ class Parser:
         if_statement.children.append(program)
         return if_statement
 
-
     def __parse_if_else_statement(self, string, index):
         if_statement = self.__parse(string, index, "if_statement")
         if if_statement == self.FAIL:
@@ -849,7 +821,7 @@ class Parser:
         else_key = string[index: index + 4]
         if else_key != "else":
             return self.FAIL
-        index += 4 # add 4 for else
+        index += 4  # add 4 for else
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -882,20 +854,17 @@ class Parser:
         if_else_statement.children.append(else_program)
         return if_else_statement
 
-
-
-
     def __parse_while_statement(self, string, index):
-        while_key = string[index: index+5]
+        while_key = string[index: index + 5]
         if while_key != "while":  # check that starts with while
             return self.FAIL
-        index += 5 # add 5 for while
+        index += 5  # add 5 for while
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
         if string[index] != "(":
             return self.FAIL
-        index += 1 # add index for open paren
+        index += 1  # add index for open paren
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -918,7 +887,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
-        program = self.__parse(string, index, "program")   # parse the program
+        program = self.__parse(string, index, "program")  # parse the program
         if program == self.FAIL:
             return self.FAIL
         index = program.index
@@ -943,11 +912,11 @@ class Parser:
             index = op_space.index  # add op_space to index
         if string[index] != "(":  # if no open paren, fail
             return self.FAIL
-        index += 1 # add 1 for paren
+        index += 1  # add 1 for paren
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
-        params_parse = self.__parse(string,index, "parameters")  # parse program parameters
+        params_parse = self.__parse(string, index, "parameters")  # parse program parameters
         index = params_parse.index
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -979,14 +948,13 @@ class Parser:
         function_parse.children.append(program_parse)  # add programs in funct to children
         return function_parse
 
-
-
     def __parse_parameters(self, string, index):
         all_parameters_parse = StatementParse(index, "parameters")  # decalre statement
-        identifier_parse = self.__parse(string,index, "identifier")  # parse identifier
+        identifier_parse = self.__parse(string, index, "identifier")  # parse identifier
         if identifier_parse != self.FAIL:
             index = identifier_parse.index  # add indentifier to index
-            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters") # create param parse
+            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,
+                                          "parameters")  # create param parse
             all_parameters_parse.children.append(param_parse)
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -1008,19 +976,18 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters")  # create param parse
+            param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,
+                                          "parameters")  # create param parse
             all_parameters_parse.children.append(param_parse)  # add the identifier to args
         all_parameters_parse.index = index  # set param index to index
         return all_parameters_parse  # get all params and return
 
-
     def __parse_optional_close_paren(self, string, index):
         parsed = ""
         if string[index] == ")":
-            return Parse(")", index +1)
+            return Parse(")", index + 1)
         else:
             return Parse("", index)
-
 
     def __parse_call_expression(self, string, index):
         operand_parse = self.__parse(string, index, "operand")
@@ -1048,14 +1015,10 @@ class Parser:
         parent.index = index  # set call exp index to index
         return parent
 
-
-
-
-
     def __parse_function_call(self, string, index):
         if string[index] != "(":
             return self.FAIL
-        index +=1
+        index += 1
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -1066,12 +1029,10 @@ class Parser:
             index = op_space.index  # add op_space to index
         if string[index] != ")":
             return self.FAIL
-        index +=1
+        index += 1
         function_call = StatementParse(index, "arguments")
         function_call.children = arguments_parse.children  # set function call children to args children
         return function_call
-
-
 
     def __parse_arguments(self, string, index):
         argument_parse = StatementParse(index, "arguments")
@@ -1103,9 +1064,8 @@ class Parser:
         argument_parse.index = index  # add index to arg parse
         return argument_parse
 
-
     def __parse_return_statement(self, string, index):
-        ret_key = string[index:index+3]
+        ret_key = string[index:index + 3]
         if ret_key != "ret":  # check for return key and add to index
             return self.FAIL
         index += 3
@@ -1113,7 +1073,7 @@ class Parser:
         if req_space == self.FAIL:  # if no req_space fail
             return self.FAIL
         index = req_space.index
-        expression_parse = self.__parse(string,index, "expression")
+        expression_parse = self.__parse(string, index, "expression")
         if expression_parse == self.FAIL:
             return self.FAIL
         index = expression_parse.index
@@ -1127,36 +1087,19 @@ class Parser:
         return_statement.children.append(expression_parse)
         return return_statement
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def test(self):
         parser = Parser()
         interpreter = Interpreter()
 
-
-
-
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse("var sum = func(a,b){ var c = a + b; ret c; };  print sum; ", "program")  # test for function insdie of a dunction
+        term = parser.parse('''
+    var get_numerator = func() {
+        ret 4;
+    };
+
+
+        ''', "program")  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
@@ -1177,6 +1120,7 @@ def test_parse(parser, string, term, expected):
         string, expected, actual
     )
 
+
 def main():
     parser = Parser()
     parser.test()
@@ -1184,5 +1128,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
