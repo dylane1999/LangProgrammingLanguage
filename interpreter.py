@@ -152,6 +152,7 @@ class Interpreter:
         lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
         env.variable_map[lookup.value] = self.__eval(node.children[1])  # set the var in the env = to the expression
+        pass
 
     def __execute_declaration_statement(self, node):
         # eval things on the right side of the equation
@@ -185,7 +186,7 @@ class Interpreter:
 
     def __execute_while_statement(self, node):
         condition = (node.children[0])
-        while self.__eval(condition):
+        while self.__eval(condition) and not self.isReturning:
             self.__push_env()
             self.__execute(node.children[1])
             self.__pop_env()
