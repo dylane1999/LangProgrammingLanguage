@@ -31,7 +31,7 @@ class Interpreter:
     def execute(self, node):
         self.__execute(node)
 
-    # FIXME implement eval functioin eval function all implemetn a closute class, return eval
+    # FIXME If statemtns +n closire
 
     def __execute(self, node):
         try:
@@ -102,6 +102,8 @@ class Interpreter:
                 return self.__eval_equals(node)
             elif node.type == "!=":
                 return self.__eval_not_equals(node)
+            elif node.type == "!":
+                return self.__eval_not(node)
             elif node.type == "<=":
                 return self.__eval_less_than_equal(node)
             elif node.type == ">=":
@@ -123,7 +125,7 @@ class Interpreter:
         except ValueError as error:
             raise error
 
-    # add a method here to get a var
+    # add a method here to get a var FIXME add an eval ! expression
 
     def __execute_program(self, program):
         for node in program.children:
@@ -145,6 +147,12 @@ class Interpreter:
         if isinstance(expression, self.Closure):
             print("closure")
             return "closure"
+        if expression is True:
+            print(1)
+            return 1
+        if expression is False:
+            print(0)
+            return 0
         print(expression)
         return expression
 
@@ -302,6 +310,11 @@ class Interpreter:
         if lhs != rhs:
             return True
         return False
+
+    def __eval_not(self, node):
+        not_expression = not(self.__eval(node.children[0]))
+        return not_expression
+
 
     def __eval_less_than(self, node):
         lhs = self.__eval(node.children[0])
