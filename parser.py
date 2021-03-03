@@ -1092,11 +1092,19 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var printer = func(n) {
-    print n;
-};
+var a = 1; 
+var foo = func(){ 
+    var a = 2; 
+    var inner = func(){
+        print a;
+        }; 
+    ret inner; };  
+var bar = foo(); 
+a =3; 
+bar();
 
-print printer(1);''')  # test for function insdie of a dunction
+
+        ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction

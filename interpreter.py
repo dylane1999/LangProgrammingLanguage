@@ -246,12 +246,14 @@ class Interpreter:
         variable_name = node.value
         env = self.environment
         result_env = None
-        while result_env is None:
-            if variable_name in env.variable_map.keys():
-                result_env = env
-                break
-            env = env.previous_env
-
+        try:
+            while result_env is None:
+                if variable_name in env.variable_map.keys():
+                    result_env = env
+                    break
+                env = env.previous_env
+        except AttributeError:
+            raise ValueError("runtime error: undefined variable")
         return result_env
 
     def __eval_lookup(self, node):
