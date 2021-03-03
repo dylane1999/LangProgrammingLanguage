@@ -128,9 +128,9 @@ class ProgramParse():
 class Parser:
     FAIL = Parse(0, -1)
 
-    def parse(self, string, term):
+    def parse(self, string):
         try:
-            return self.__parse(string, 0, term)
+            return self.__parse(string, 0, "program")
         except ValueError as error:
             print(error)
             return None
@@ -1092,33 +1092,11 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var outer = func() {
-    ret func() {
-    };
+var printer = func(n) {
+    print n;
 };
 
-var fn1 = outer();
-var fn2 = outer();
-
-print fn1 == fn1;
-print fn1 == fn2;
-print fn2 == fn2;
-print fn1 != fn2;
-
-print fn1;
-print !fn1;
-
-if (fn1) {
-    print 1;
-} else {
-    print 0;
-}
-
-if (!fn1) {
-    print 1;
-} else {
-    print 0;
-}''', "program")  # test for function insdie of a dunction
+print printer(1);''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
