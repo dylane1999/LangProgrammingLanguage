@@ -1094,57 +1094,31 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var Rational = func(numerator, denominator) {
-
-    var get_numerator = func() {
-        ret numerator;
-    };
-
-    var get_denominator = func() {
-        ret denominator;
-    };
-
-    var set_numerator = func(val) {
-        numerator = val;
-    };
-
-    var set_denominator = func(val) {
-        denominator = val;
-    };
-
-    var multiply = func(other) {
-        ret Rational(
-            numerator * other(1)(),
-            denominator * other(2)()
-        );
-    };
-
-    ret func(index) {
-        if (index == 1) {
-            ret get_numerator;
+var is_prime = func(n) {
+    var i = 2;
+    while (i * i <= n) {
+        var factor = n / i;
+        if (i * factor == n) {
+            ret 0;
         }
-        if (index == 2) {
-            ret get_denominator;
-        }
-        if (index == 3) {
-            ret set_numerator;
-        }
-        if (index == 4) {
-            ret set_denominator;
-        }
-        if (index == 5) {
-            ret multiply;
-        }
-    };
-
+        i = i + 1;
+    }
+    ret 1;
 };
 
-var a = Rational(0, 0);
-a(3)(1);
-a(4)(2);
-var b = Rational(2, 1);
-var c = a(5)(b)(5)(b)(5)(b);
-print c(1)() / c(2)();  ''', "program")  # test for function insdie of a dunction
+var get_nth_prime = func(n) {
+    var i = 1;
+    var count = 0;
+    while (count < n) {
+        i = i + 1;
+        if (is_prime(i) == 1) {
+            count = count + 1;
+        }
+    }
+    ret i;
+};
+
+print get_nth_prime(100);''', "program")  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
