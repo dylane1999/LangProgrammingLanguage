@@ -672,16 +672,14 @@ class Parser:
         if string[index] != "!":
             return self.FAIL
         index += 1  # add one for !
-        req_space = self.__parse(string, index, "req_space")
-        if req_space == self.FAIL:  # if no req_space fail
-            return self.FAIL
-        index = req_space.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
         comp_expression = self.__parse(string, index, "comp_expression")
         if comp_expression == self.FAIL:
             return self.FAIL
         index = comp_expression.index  # add comp exp to index
-        not_expression = StatementParse(index, "not_expression")
-        not_expression.children.append("!")
+        not_expression = StatementParse(index, "!")
         not_expression.children.append(comp_expression)
         return not_expression
 
@@ -1094,31 +1092,33 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var is_prime = func(n) {
-    var i = 2;
-    while (i * i <= n) {
-        var factor = n / i;
-        if (i * factor == n) {
-            ret 0;
-        }
-        i = i + 1;
-    }
-    ret 1;
+var outer = func() {
+    ret func() {
+    };
 };
 
-var get_nth_prime = func(n) {
-    var i = 1;
-    var count = 0;
-    while (count < n) {
-        i = i + 1;
-        if (is_prime(i) == 1) {
-            count = count + 1;
-        }
-    }
-    ret i;
-};
+var fn1 = outer();
+var fn2 = outer();
 
-print get_nth_prime(100);''', "program")  # test for function insdie of a dunction
+print fn1 == fn1;
+print fn1 == fn2;
+print fn2 == fn2;
+print fn1 != fn2;
+
+print fn1;
+print !fn1;
+
+if (fn1) {
+    print 1;
+} else {
+    print 0;
+}
+
+if (!fn1) {
+    print 1;
+} else {
+    print 0;
+}''', "program")  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
