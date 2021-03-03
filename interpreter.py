@@ -201,13 +201,12 @@ class Interpreter:
 
     def __eval_function_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
-        # FIXME evaluate child[0] - the first
         if node.children[0].type == "call":   # if child is a call eval call to get closure
             closure = self.__eval(node.children[0])
         else:
-            function_name = node.children[0].value  # if child is not a call get the func name from identifier child
-            closure = self.environment.variable_map.get(function_name)  # get the closure from the env
-
+            # function_name = node.children[0].value  # if child is not a call get the func name from identifier child
+            # function_env = self.__eval(node.children[0])  # get the closure through eval lookup
+            closure = self.__eval(node.children[0])  # get the closure through eval lookup
         if closure is None:
             raise ValueError("undefined function")
         # if isinstance()

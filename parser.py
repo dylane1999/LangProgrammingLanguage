@@ -1094,12 +1094,57 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
+var Rational = func(numerator, denominator) {
+
     var get_numerator = func() {
-        ret 4;
+        ret numerator;
     };
 
+    var get_denominator = func() {
+        ret denominator;
+    };
 
-        ''', "program")  # test for function insdie of a dunction
+    var set_numerator = func(val) {
+        numerator = val;
+    };
+
+    var set_denominator = func(val) {
+        denominator = val;
+    };
+
+    var multiply = func(other) {
+        ret Rational(
+            numerator * other(1)(),
+            denominator * other(2)()
+        );
+    };
+
+    ret func(index) {
+        if (index == 1) {
+            ret get_numerator;
+        }
+        if (index == 2) {
+            ret get_denominator;
+        }
+        if (index == 3) {
+            ret set_numerator;
+        }
+        if (index == 4) {
+            ret set_denominator;
+        }
+        if (index == 5) {
+            ret multiply;
+        }
+    };
+
+};
+
+var a = Rational(0, 0);
+a(3)(1);
+a(4)(2);
+var b = Rational(2, 1);
+var c = a(5)(b)(5)(b)(5)(b);
+print c(1)() / c(2)();  ''', "program")  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
