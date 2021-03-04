@@ -552,7 +552,8 @@ class Parser:
 
     def __parse_identifier_char(self, string, index):
         parsed = ""
-        while index < len(string) and (string[index].isalnum() or string[index] == "-" or string[index] == "_"):  # loops and adds to parsed while still alphanumeric
+        while index < len(string) and (string[index].isalnum() or string[index] == "-" or string[
+            index] == "_"):  # loops and adds to parsed while still alphanumeric
             parsed += string[index]
             index += 1
         return Parse(parsed, index)
@@ -623,13 +624,13 @@ class Parser:
         variable = assignment_statement.children[0]  # get the variable from assignment
         expression = assignment_statement.children[1]  # get the expression from assignment (rhs)
         declaration_statement = StatementParse(index, "declare")
-        identifier = DeclareLocationParse(variable.value, variable.index,variable.type) # make var into identifier parse
+        identifier = DeclareLocationParse(variable.value, variable.index,
+                                          variable.type)  # make var into identifier parse
         declaration_statement.children.append(identifier)
         declaration_statement.children.append(expression)  # add variable & expression as children of declare statement
         if self.__check_forbidden_names(declaration_statement.children[0].value):  # pass var name as arg
             raise ValueError("syntax error")  # check for exceptions on variable name
         return declaration_statement
-
 
     def __check_forbidden_names(self, string):
         if string == "print":
@@ -654,7 +655,6 @@ class Parser:
             return True
         return False  # return a boolean if the identifier name is one of the forbidden names
 
-
     def __parse_comp_expression(self, string, index):
         left_expression = self.__parse(string, index, "add|sub")  # parse the lhs add|sub expression
         if left_expression == self.FAIL:
@@ -662,24 +662,21 @@ class Parser:
         index = left_expression.index  # add lhs to index
         parent = None  # declare parent
         parse = None  # declare parse to fail test
-        while index < len(string) and parse != self.FAIL:
-            op_space = self.__parse(string, index, "op_space")  # parse optional space
-            if op_space != self.FAIL:
-                index = op_space.index  # add op_space to index
-            operator = self.__parse(string, index, "comp_operator")
-            if operator == self.FAIL:
-                parse = self.FAIL
-                break
-            index = operator.index  # add operator to index
-            right_expression = self.__parse(string, index, "add|sub")  # parse the rhs add|sub expression
-            if right_expression == self.FAIL:
-                parse = self.FAIL
-                break
-            index = right_expression.index  # add right expression to index
-            parent = StatementParse(index, operator.value)  # new statement with type of operator value
-            parent.children.append(left_expression)
-            parent.children.append(right_expression)
-            left_expression = parent
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        operator = self.__parse(string, index, "comp_operator")
+        if operator == self.FAIL:
+            return left_expression
+        index = operator.index  # add operator to index
+        right_expression = self.__parse(string, index, "add|sub")  # parse the rhs add|sub expression
+        if right_expression == self.FAIL:
+            return left_expression
+        index = right_expression.index  # add right expression to index
+        parent = StatementParse(index, operator.value)  # new statement with type of operator value
+        parent.children.append(left_expression)
+        parent.children.append(right_expression)
+        left_expression = parent
         if parent is None:
             return left_expression  # if there was no comparison return the left expression
         return parent
@@ -1122,7 +1119,14 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse('''var var12 = func(){ print 1; };''')  # test for function insdie of a dunction
+        term = parser.parse('''# testing comparison expression syntax and it only allowing one 'tail'
+
+if (1 < 2 > 3 != 4){
+    print 1;
+}
+else {
+    print 0;
+}''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
