@@ -132,7 +132,7 @@ class Parser:
         try:
             return self.__parse(string, 0, "program")
         except ValueError as error:
-            print(error)
+            print("syntax error")
             return None
 
     def __parse(self, string, index, term):  # main parse wrapper that calls each item to be parsed @each index
@@ -542,6 +542,7 @@ class Parser:
         parsed = ""
         if (not string[index].isalpha()) and (string[index] != "_"):  # if string is not a letter and string not a _
             return self.FAIL
+            # raise ValueError("starts with illegal char")
         parsed += string[index]
         index += 1
         return Parse(parsed, index)
@@ -555,14 +556,15 @@ class Parser:
 
     def __parse_identifier(self, string, index):
         parsed = ""
+        first_index = index
         parse_first_char = self.__parse(string, index, "identifier_first_char")  # get first char
         if parse_first_char == self.FAIL:  # check for fail
             return self.FAIL
         parsed += parse_first_char.value  # add index and value
         index = parse_first_char.index
-        parse_remaining = self.__parse(string, index, "identifier_char")  # parse for remaining chars
-        parsed += parse_remaining.value
-        index = parse_remaining.index  # add index and value
+        identifier_parse = self.__parse(string, index, "identifier_char")  # parse for remaining chars
+        parsed += identifier_parse.value
+        index = identifier_parse.index  # add index and value
         return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
 
     def __parse_location(self, string, index):
@@ -618,11 +620,37 @@ class Parser:
         variable = assignment_statement.children[0]  # get the variable from assignment
         expression = assignment_statement.children[1]  # get the expression from assignment (rhs)
         declaration_statement = StatementParse(index, "declare")
-        identifier = DeclareLocationParse(variable.value, variable.index,
-                                          variable.type)  # make var into identifier parse
+        identifier = DeclareLocationParse(variable.value, variable.index,variable.type) # make var into identifier parse
         declaration_statement.children.append(identifier)
         declaration_statement.children.append(expression)  # add variable & expression as children of declare statement
+        if self.__check_forbidden_names(declaration_statement.children[0].value):  # pass var name as arg
+            raise ValueError("syntax error")  # check for exceptions on variable name
         return declaration_statement
+
+
+    def __check_forbidden_names(self, string):
+        if string == "print":
+            return True
+        elif string == "var":
+            return True
+        elif string == "if":
+            return True
+        elif string == "while":
+            return True
+        elif string == "funct":
+            return True
+        elif string == "ret":
+            return True
+        elif string == "class":
+            return True
+        elif string == "int":
+            return True
+        elif string == "bool":
+            return True
+        elif string == "string":
+            return True
+        return False  # return a boolean if the identifier name is one of the forbidden names
+
 
     def __parse_comp_expression(self, string, index):
         left_expression = self.__parse(string, index, "add|sub")  # parse the lhs add|sub expression
@@ -1092,16 +1120,7 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var a = 1; 
-var foo = func(){ 
-    var a = 2; 
-    var inner = func(){
-        print a;
-        }; 
-    ret inner; };  
-var bar = foo(); 
-a =3; 
-bar();
+        var x = 5 ;
 
 
         ''')  # test for function insdie of a dunction
