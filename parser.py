@@ -130,8 +130,11 @@ class Parser:
 
     def parse(self, string):
         try:
+            parse = self.__parse(string, 0, "program")
+            if len(string) != parse.index:
+                raise ValueError("index error/ syntax error")
             return self.__parse(string, 0, "program")
-        except ValueError as error:
+        except Exception as error:
             print("syntax error")
             return None
 
@@ -1119,11 +1122,7 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse('''
-        var x = 5 ;
-
-
-        ''')  # test for function insdie of a dunction
+        term = parser.parse('''var var12 = func(){ print 1; };''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
