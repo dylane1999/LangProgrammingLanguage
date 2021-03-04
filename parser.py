@@ -874,7 +874,7 @@ class Parser:
         # ir tree will be qualifiter, if, else
         qualifying_statement = if_statement.children[0]
         if_program = if_statement.children[1]
-        if_else_statement = StatementParse(index, "if_else")
+        if_else_statement = StatementParse(index, "ifelse")
         if_else_statement.children.append(qualifying_statement)
         if_else_statement.children.append(if_program)
         if_else_statement.children.append(else_program)
