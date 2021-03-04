@@ -7,6 +7,7 @@ class Interpreter:
         self.function_call_depth = 0
         self.return_value = 0
         self.isReturning = False
+        self.output = ""
 
     class Closure:
         def __init__(self, parse, environment, parameters):
@@ -30,55 +31,31 @@ class Interpreter:
 
     def execute(self, node):
         self.__execute(node)
+        return self.output
 
     # FIXME If statemtns +n closire
 
     def __execute(self, node):
         try:
             if node.type == "program":
-                try:
-                    return self.__execute_program(node)
-                except ValueError as error:
-                    raise error
+                    self.__execute_program(node)
             elif node.type == "print":
-                try:
-                    return self.__execute_print(node)
-                except ValueError as error:
-                    raise error
+                    self.__execute_print(node)
             elif node.type == "assign":
-                try:
                     self.__execute_assignment_statement(node)
-                except ValueError as error:
-                    print(error)
             elif node.type == "declare":
-                try:
                     self.__execute_declaration_statement(node)
-                except ValueError as error:
-                    raise error
             elif node.type == "if":
-                try:
                     self.__execute_if_statement(node)
-                except ValueError as error:
-                    raise error
             elif node.type == "if_else":
-                try:
                     self.__execute_if_else_statement(node)
-                except ValueError as error:
-                    print(error)
             elif node.type == "while":
-                try:
                     self.__execute_while_statement(node)
-                except ValueError as error:
-                    raise error
             elif node.type == "return":
-                try:
                     self.__execute_return(node)
-                except ValueError as error:
-                    raise error
             else:
                 self.__eval(node)
-
-        except ValueError as error:
+        except Exception as error:
             print(error)
             raise SystemExit
 
@@ -154,7 +131,7 @@ class Interpreter:
             print(0)
             return 0
         print(expression)
-        return expression
+        self.output += str(expression) + "\n"
 
     def __execute_assignment_statement(self, node):
         lookup = node.children[0]  # get the lookup
@@ -169,8 +146,6 @@ class Interpreter:
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
             raise ValueError("variable already defined")
-        if self.__check_forbidden_names(variable_name):
-            raise ValueError("forbidden variable name")  # check for exceptions on variable name
         self.environment.variable_map[variable_name] = self.__eval(node.children[1])
         # return
 
@@ -234,7 +209,7 @@ class Interpreter:
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
         function_program = closure.parse.children[1]
         execute_result = self.__execute(function_program)  # execute the IR tree of the function
-        self.__pop_env()  
+        self.__pop_env()
         self.environment = current_env  # set the env back to the current env
         return_value = self.return_value
         self.return_value = 0  # set return value back
@@ -360,25 +335,4 @@ class Interpreter:
             return True
         return False
 
-    def __check_forbidden_names(self, string):
-        if string == "print":
-            return True
-        elif string == "var":
-            return True
-        elif string == "if":
-            return True
-        elif string == "while":
-            return True
-        elif string == "funct":
-            return True
-        elif string == "ret":
-            return True
-        elif string == "class":
-            return True
-        elif string == "int":
-            return True
-        elif string == "bool":
-            return True
-        elif string == "string":
-            return True
-        return False  # return a boolean if the identifier name is one of the forbidden names
+
