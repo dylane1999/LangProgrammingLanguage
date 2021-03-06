@@ -1144,8 +1144,12 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# if statements shouldn't be used as conditions
-if(if(1)) {var a = 2;}
+# this is testing scope and making sure that b is not printed because the if statement is never entered
+var a = 0;
+if (a == 2){
+    var b = a;
+}
+print b;
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 

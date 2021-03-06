@@ -113,7 +113,7 @@ class Interpreter:
 
     def __execute_return(self, node):
         if self.function_call_depth <= 0:
-            raise ValueError("can not return outside of a function")
+            raise ValueError("runtime error: can not return outside of a function")
         return_value = self.__eval(node.children[0])
         self.isReturning = True
         self.return_value = return_value
@@ -196,7 +196,7 @@ class Interpreter:
             # function_env = self.__eval(node.children[0])  # get the closure through eval lookup
             closure = self.__eval(node.children[0])  # get the closure through eval lookup
         if closure is None:
-            raise ValueError("undefined function")
+            raise ValueError("runtime error: undefined function")
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
@@ -208,7 +208,7 @@ class Interpreter:
         self.__push_env()  # push a new env on stack
         # check that the len of closure params and call args are the same
         if len(closure.parameters) != len(evaluated_args):
-            raise ValueError("incorrect number of arguments")
+            raise ValueError("runtime error: incorrect number of arguments")
         for i in range(len(closure.parameters)):
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
         function_program = closure.parse.children[1]
@@ -245,7 +245,7 @@ class Interpreter:
                 break
             env = env.previous_env
         if env is None:
-            raise ValueError("variable not defined")
+            raise ValueError("runtime error: variable not defined")
         result_value = result_env.variable_map[variable_name]
         return result_value
 
