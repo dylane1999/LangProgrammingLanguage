@@ -636,7 +636,7 @@ class Parser:
         req_space = self.__parse(string, index, "req_space")  # parse the required one space or newline
         if req_space == self.FAIL:
             return self.FAIL
-        index += 1  # add one for req space
+        index = req_space.index  # add one for req space
         assignment_statement = self.__parse(string, index, "assignment_statement")
         if assignment_statement == self.FAIL:
             return self.FAIL  # if no assignment then fail
@@ -1146,8 +1146,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# tests to make sure assignment is working
-var test = 2+3; test = 1; print test;
+# unconventional, but grammar does not demand that statements must be seperated by a newline
+print 1;var      num = 2;print num   ;
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
