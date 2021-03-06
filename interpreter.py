@@ -123,13 +123,13 @@ class Interpreter:
         expression = self.__eval(node.children[0])
         if isinstance(expression, self.Closure):
             print("closure")
-            return "closure"
+            self.output += "closure" + "\n"
         if expression is True:
             print(1)
-            return 1
+            self.output += "1" + "\n"
         if expression is False:
             print(0)
-            return 0
+            self.output += "0" + "\n"
         print(expression)
         self.output += str(expression) + "\n"
 
