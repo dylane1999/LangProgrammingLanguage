@@ -124,14 +124,18 @@ class Interpreter:
         if isinstance(expression, self.Closure):
             print("closure")
             self.output += "closure" + "\n"
+            return
         if expression is True:
             print(1)
             self.output += "1" + "\n"
+            return
         if expression is False:
             print(0)
             self.output += "0" + "\n"
+            return
         print(expression)
         self.output += str(expression) + "\n"
+        return 
 
     def __execute_assignment_statement(self, node):
         lookup = node.children[0]  # get the lookup
