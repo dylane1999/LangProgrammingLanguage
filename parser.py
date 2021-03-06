@@ -421,13 +421,14 @@ class Parser:
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
-            parent = StatementParse(right_parse.index, operator.value)
+            index = right_parse.index
+            parent = StatementParse(index, operator.value)
             parent.children.append(left_parse)  # add right/left parse
             parent.children.append(right_parse)
             left_parse = parent  # set left parse to parent
-            index = right_parse.index  # set index to right parse index
         if parent is None:
             return left_parse  # if there was no expression return the left operand
+        parent.index = index
         return parent
 
     def __parse_add_sub_operator(self, string, index):
