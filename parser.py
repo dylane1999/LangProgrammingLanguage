@@ -1150,6 +1150,7 @@ if (a == 2){
     var b = a;
 }
 print b;
+
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
