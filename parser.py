@@ -379,13 +379,14 @@ class Parser:
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
-            parent = StatementParse(right_parse.index, operator.value)
+            index = right_parse.index
+            parent = StatementParse(index, operator.value)
             parent.children.append(left_parse)  # add right/left parse
             parent.children.append(right_parse)
             left_parse = parent  # set left parse to parent
-            index = right_parse.index  # set index to right parse index
         if parent is None:
             return left_parse  # if there was no expression return the left operand
+        parent.index = index
         return parent  # return the root level parent
 
     def __parse_mult_div_expression(self, string, index):  # parse multiplication and division
@@ -456,16 +457,19 @@ class Parser:
             index = space_parse.index  # if parse of spaces was success add to index
         if string[index] != '(':  # check if the string starts with open parenthesis
             return self.FAIL
-        parse = self.__parse(string, index + 1, "expression")  # parses the expression inside the parenthesis
+        index += 1
+        parse = self.__parse(string, index, "expression")  # parses the expression inside the parenthesis
         if parse == self.FAIL:  # if addition is not in grammar fails
             return self.FAIL
-        if string[parse.index] != ")":  # checks char at end of addition string, if not a close paren, then fail
+        index = parse.index
+        if string[index] != ")":  # checks char at end of addition string, if not a close paren, then fail
             return self.FAIL
-        space_parse = self.__parse(string, parse.index + 1, "op_space")  # checks for space at end and adds to index
+        index += 1
+        space_parse = self.__parse(string, index, "op_space")  # checks for space at end and adds to index
         if space_parse != self.FAIL:  # if spaces return with spaces index
             parse.index = space_parse.index
             return parse
-        parse.index += 1
+        parse.index = index
         return parse  # add one index to account for close parent \ return statement parse
 
     def __parse_program(self, string, index):
@@ -1144,10 +1148,12 @@ class Parser:
         interpreter = Interpreter()
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
-        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
+        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6 FIXME prob in add sub
         term = parser.parse('''
-# unconventional, but grammar does not demand that statements must be seperated by a newline
-print 1;var      num = 2;print num   ;
+# assign var with expression in terms of itself
+a - ( a * a + a )/a;
+# 1
+
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
