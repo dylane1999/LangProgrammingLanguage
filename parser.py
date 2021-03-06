@@ -1139,9 +1139,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-var sum = func(a,b){ var c = a + b; ret c; };  print sum; 
-
-#print a function to make sure that it prints "closure"
+# Tests if/else and some environment stuff
+var a = 0; var c = 0; if(a){var b = 0; c= b ;} else {var b = 1; c= b ;} if(a != c){print 123;}
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
