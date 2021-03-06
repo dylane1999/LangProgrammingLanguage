@@ -1139,8 +1139,9 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# tests to make sure you cannot declare the same variable twice
-var test = 2+3; var test = 1;
+var sum = func(a,b){ var c = a + b; ret c; };  print sum; 
+
+#print a function to make sure that it prints "closure"
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
