@@ -47,7 +47,7 @@ class Interpreter:
                     self.__execute_declaration_statement(node)
             elif node.type == "if":
                     self.__execute_if_statement(node)
-            elif node.type == "if_else":
+            elif node.type == "ifelse":
                     self.__execute_if_else_statement(node)
             elif node.type == "while":
                     self.__execute_while_statement(node)
@@ -135,7 +135,7 @@ class Interpreter:
             return
         print(expression)
         self.output += str(expression) + "\n"
-        return 
+        return
 
     def __execute_assignment_statement(self, node):
         lookup = node.children[0]  # get the lookup
