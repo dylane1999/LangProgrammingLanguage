@@ -30,34 +30,33 @@ class Interpreter:
         self.environment = previous_env  # set previous to current env
 
     def execute(self, node):
-        self.__execute(node)
-        return self.output
-
-    # FIXME If statemtns +n closire
-
-    def __execute(self, node):
         try:
-            if node.type == "program":
-                    self.__execute_program(node)
-            elif node.type == "print":
-                    self.__execute_print(node)
-            elif node.type == "assign":
-                    self.__execute_assignment_statement(node)
-            elif node.type == "declare":
-                    self.__execute_declaration_statement(node)
-            elif node.type == "if":
-                    self.__execute_if_statement(node)
-            elif node.type == "ifelse":
-                    self.__execute_if_else_statement(node)
-            elif node.type == "while":
-                    self.__execute_while_statement(node)
-            elif node.type == "return":
-                    self.__execute_return(node)
-            else:
-                self.__eval(node)
+            self.__execute(node)
+            return self.output
         except Exception as error:
             print(error)
-            raise SystemExit
+            return self.output
+
+    def __execute(self, node):
+        if node.type == "program":
+                self.__execute_program(node)
+        elif node.type == "print":
+                self.__execute_print(node)
+        elif node.type == "assign":
+                self.__execute_assignment_statement(node)
+        elif node.type == "declare":
+                self.__execute_declaration_statement(node)
+        elif node.type == "if":
+                self.__execute_if_statement(node)
+        elif node.type == "ifelse":
+                self.__execute_if_else_statement(node)
+        elif node.type == "while":
+                self.__execute_while_statement(node)
+        elif node.type == "return":
+                self.__execute_return(node)
+        else:
+            self.__eval(node)
+
 
     def __eval(self, node):
         try:
@@ -149,6 +148,7 @@ class Interpreter:
         # if item already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
+            self.output = "runtime error: variable already defined"
             raise ValueError("runtime error: variable already defined")
         self.environment.variable_map[variable_name] = self.__eval(node.children[1])
         # return
@@ -196,6 +196,7 @@ class Interpreter:
             # function_env = self.__eval(node.children[0])  # get the closure through eval lookup
             closure = self.__eval(node.children[0])  # get the closure through eval lookup
         if closure is None:
+            self.output = "runtime error: undefined function"
             raise ValueError("runtime error: undefined function")
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
@@ -208,6 +209,7 @@ class Interpreter:
         self.__push_env()  # push a new env on stack
         # check that the len of closure params and call args are the same
         if len(closure.parameters) != len(evaluated_args):
+            self.output = "runtime error: incorrect number of arguments"
             raise ValueError("runtime error: incorrect number of arguments")
         for i in range(len(closure.parameters)):
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
@@ -232,6 +234,7 @@ class Interpreter:
                     break
                 env = env.previous_env
         except AttributeError:
+            self.output = "runtime error: undefined variable"
             raise ValueError("runtime error: undefined variable")
         return result_env
 
@@ -245,7 +248,8 @@ class Interpreter:
                 break
             env = env.previous_env
         if env is None:
-            raise ValueError("runtime error: variable not defined")
+            self.output = "runtime error: undefined variable"
+            raise ValueError("runtime error: undefined variable")
         result_value = result_env.variable_map[variable_name]
         return result_value
 
@@ -265,6 +269,7 @@ class Interpreter:
         left_divide = self.__eval(node.children[0])
         right_divide = self.__eval(node.children[1])
         if right_divide == 0:
+            self.output = "runtime error: divide by zero"
             raise ValueError("runtime error: divide by zero")
         quotient = left_divide // right_divide
         return quotient
