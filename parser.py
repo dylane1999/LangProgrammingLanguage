@@ -265,7 +265,8 @@ class Parser:
     def __parse_optional_spaces(self, string, index):
         parsed = ""
         # loops through and adds to parsed while still a digit
-        while index < len(string) and (string[index] == " " or string[index] == "\n" or string[index] == "#" or string[index] == "\t"):
+        while index < len(string) and (
+                string[index] == " " or string[index] == "\n" or string[index] == "#" or string[index] == "\t"):
 
             if index < len(string) and string[index] == " ":  # parse for spaces
                 parse = self.__parse(string, index, "space")
@@ -563,6 +564,13 @@ class Parser:
         print_statement = StatementParse(index, "print")
         print_statement.children.append(expression_parse)
         return print_statement
+
+    def __test_identifier_first_char(self, string):
+        parsed = ""
+        if (not string[0].isalpha()) and (string[0] != "_"):  # if string is not a letter and string not a _
+            return False
+            # raise ValueError("starts with illegal char")
+        return True
 
     def __parse_identifier_first_char(self, string, index):
         parsed = ""
@@ -865,6 +873,7 @@ class Parser:
         if_statement.children.append(qualifying_expression)
         if_statement.children.append(program)
         return if_statement
+
     # forgot the ; at the end
 
     def __parse_if_else_statement(self, string, index):
@@ -1046,7 +1055,7 @@ class Parser:
         else:
             return Parse("", index)
 
-    def __parse_call_expression(self, string, index):
+    def __parse_call_expression(self, string, index):  # make it so that only a valid opernad can be called
         operand_parse = self.__parse(string, index, "operand")
         if operand_parse == self.FAIL:
             return self.FAIL
@@ -1062,6 +1071,9 @@ class Parser:
             if function_call_parse == self.FAIL:
                 parse = self.FAIL
                 break
+            operand_validity = self.__test_identifier_first_char(operand_parse.value)
+            if not operand_validity:  # if the first char of the identifier is not a letter or underscore then fail
+                return self.FAIL
             index = function_call_parse.index  # set index to funct call parse
             parent = CallExpression(index, "call", operand_parse.value)
             parent.children.append(lhs)
@@ -1151,9 +1163,9 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6 FIXME prob in add sub
         term = parser.parse('''
-# assign var with expression in terms of itself
-a - ( a * a + a )/a;
-# 1
+# This should also create a syntax error because the parser isn’t able to successfully parse the entire expression.
+# Once it does “( 3 “ it expects either an operator or a closed parenthesis, not another open one.
+print ( 3 ( 4 ( 5 ) ) );
 
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
