@@ -227,6 +227,8 @@ class Parser:
             return self.__parse_call_expression(string, index)
         elif term == "return_statement":
             return self.__parse_return_statement(string, index)
+        elif term == "tab":
+            return self.__parse_tab(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -263,7 +265,7 @@ class Parser:
     def __parse_optional_spaces(self, string, index):
         parsed = ""
         # loops through and adds to parsed while still a digit
-        while index < len(string) and (string[index] == " " or string[index] == "\n" or string[index] == "#"):
+        while index < len(string) and (string[index] == " " or string[index] == "\n" or string[index] == "#" or string[index] == "\t"):
 
             if index < len(string) and string[index] == " ":  # parse for spaces
                 parse = self.__parse(string, index, "space")
@@ -278,6 +280,13 @@ class Parser:
                     return self.FAIL
                 parsed += parse.value  # add parsed newline
                 index = parse.index  # set index to index of after the newline
+
+            if index < len(string) and string[index] == "\t":  # parse for tabs
+                parse = self.__parse(string, index, "tab")
+                if parse == self.FAIL:
+                    return self.FAIL
+                parsed += parse.value  # add parsed space
+                index = parse.index  # set index to index of after the tab
 
             if index < len(string) and string[index] == "#":  # parse for comment
                 parse = self.__parse(string, index, "comment")
@@ -322,6 +331,15 @@ class Parser:
     def __parse_newline(self, string, index):
         parsed = ""
         while index < len(string) and string[index] == "\n":
+            parsed += string[index]
+            index += 1
+        if parsed == "":
+            return self.FAIL
+        return Parse(parsed, index)
+
+    def __parse_tab(self, string, index):
+        parsed = ""
+        while index < len(string) and string[index] == "\t":
             parsed += string[index]
             index += 1
         if parsed == "":
@@ -835,6 +853,7 @@ class Parser:
         if_statement.children.append(qualifying_expression)
         if_statement.children.append(program)
         return if_statement
+    # forgot the ; at the end
 
     def __parse_if_else_statement(self, string, index):
         if_statement = self.__parse(string, index, "if_statement")
@@ -1119,14 +1138,18 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        term = parser.parse('''# testing comparison expression syntax and it only allowing one 'tail'
-
-if (1 < 2 > 3 != 4){
-    print 1;
+        term = parser.parse('''
+# finds the first positive integer with a 1 in the ones place that's divisible by 7
+var a = 1; 
+var done = 0; 
+while (! done){ 
+	if((a/7) * 7 == a){
+		print a; 
+		done = 1;
+	}
+	a = a + 10;
 }
-else {
-    print 0;
-}''')  # test for function insdie of a dunction
+''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
         # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
