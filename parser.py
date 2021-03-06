@@ -823,6 +823,11 @@ class Parser:
         qualifying_expression = self.__parse(string, index, "expression")
         if qualifying_expression == self.FAIL:
             return self.FAIL
+        if qualifying_expression.type == "call":
+            if qualifying_expression.func_name == "if":
+                return self.FAIL
+            elif qualifying_expression.func_name == "elif":
+                return self.FAIL
         index = qualifying_expression.index  # add exp to index
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -1139,8 +1144,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# Tests if/else and some environment stuff
-var a = 0; var c = 0; if(a){var b = 0; c= b ;} else {var b = 1; c= b ;} if(a != c){print 123;}
+# if statements shouldn't be used as conditions
+if(if(1)) {var a = 2;}
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
