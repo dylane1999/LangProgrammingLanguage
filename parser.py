@@ -1139,16 +1139,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# finds the first positive integer with a 1 in the ones place that's divisible by 7
-var a = 1; 
-var done = 0; 
-while (! done){ 
-	if((a/7) * 7 == a){
-		print a; 
-		done = 1;
-	}
-	a = a + 10;
-}
+# tests to make sure you cannot declare the same variable twice
+var test = 2+3; var test = 1;
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 

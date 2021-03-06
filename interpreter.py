@@ -145,7 +145,7 @@ class Interpreter:
         # if item already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
-            raise ValueError("variable already defined")
+            raise ValueError("runtime error: variable already defined")
         self.environment.variable_map[variable_name] = self.__eval(node.children[1])
         # return
 
