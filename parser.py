@@ -30,7 +30,7 @@ class IntergerParse():
         return str(self.value)
 
 
-class StatementParse():  # fixme operation parse
+class StatementParse():
 
     def __init__(self, index, type):
         self.index = index
@@ -48,7 +48,7 @@ class StatementParse():  # fixme operation parse
         return expression_result
 
 
-class CallExpression(StatementParse):  # fixme operation parse
+class CallExpression(StatementParse):
 
     def __init__(self, index, type, func_name):
         super().__init__(index, type)
@@ -599,6 +599,8 @@ class Parser:
         location_parse = self.__parse(string, index, "location")  # parse the location
         if location_parse == self.FAIL:
             return self.FAIL
+        if self.__check_forbidden_names(location_parse.value):  # pass var name as arg
+            return self.FAIL
         # change var_lovation to be a VarLocation parse object
         var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
         index = var_location.index  # add var_location index
@@ -1144,13 +1146,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# this is testing scope and making sure that b is not printed because the if statement is never entered
-var a = 0;
-if (a == 2){
-    var b = a;
-}
-print b;
-
+# tests to make sure assignment is working
+var test = 2+3; test = 1; print test;
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
 
