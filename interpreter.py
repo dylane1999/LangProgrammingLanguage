@@ -255,18 +255,27 @@ class Interpreter:
     def __eval_plus(self, node):
         left_sum = self.__eval(node.children[0])
         right_sum = self.__eval(node.children[1])
+        if isinstance(left_sum, self.Closure) or isinstance(right_sum, self.Closure):
+            self.output = "runtime error: math operation on functions"
+            raise ValueError("runtime error: math operation on functions")
         sum = left_sum + right_sum
         return sum
 
     def __eval_minus(self, node):
         left_difference = self.__eval(node.children[0])
         right_difference = self.__eval(node.children[1])
+        if isinstance(left_difference, self.Closure) or isinstance(right_difference, self.Closure):
+            self.output = "runtime error: math operation on functions"
+            raise ValueError("runtime error: math operation on functions")
         difference = left_difference - right_difference
         return difference
 
     def __eval_divide(self, node):
         left_divide = self.__eval(node.children[0])
         right_divide = self.__eval(node.children[1])
+        if isinstance(left_divide, self.Closure) or isinstance(right_divide, self.Closure):
+            self.output = "runtime error: math operation on functions"
+            raise ValueError("runtime error: math operation on functions")
         if right_divide == 0:
             self.output = "runtime error: divide by zero"
             raise ValueError("runtime error: divide by zero")
@@ -276,6 +285,9 @@ class Interpreter:
     def __eval_mult(self, node):
         left_mult = self.__eval(node.children[0])
         right_mult = self.__eval(node.children[1])
+        if isinstance(left_mult, self.Closure) or isinstance(right_mult, self.Closure):
+            self.output = "runtime error: math operation on functions"
+            raise ValueError("runtime error: math operation on functions")
         product = left_mult * right_mult
         return product
 
