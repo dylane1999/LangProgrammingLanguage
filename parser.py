@@ -1202,9 +1202,9 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# Tests that returning outside of a function throws an error
-ret 10;
-print 2;
+# Tests calling non-functions
+var x = 0;
+x();
 
 
         

@@ -198,6 +198,9 @@ class Interpreter:
         if closure is None:
             self.output = "runtime error: undefined function"
             raise ValueError("runtime error: undefined function")
+        if not isinstance(closure, self.Closure):
+            self.output = "runtime error: calling a non-function"
+            raise ValueError("runtime error: calling a non-function")
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
@@ -214,7 +217,7 @@ class Interpreter:
         for i in range(len(closure.parameters)):
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
         function_program = closure.parse.children[1]
-        execute_result = self.__execute(function_program)  # execute the IR tree of the function
+        self.__execute(function_program)  # execute the IR tree of the function
         self.__pop_env()
         self.environment = current_env  # set the env back to the current env
         return_value = self.return_value
