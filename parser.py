@@ -229,10 +229,15 @@ class Parser:
             return self.__parse_return_statement(string, index)
         elif term == "tab":
             return self.__parse_tab(string, index)
+        elif term == "class":
+            return self.__parse_class(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
     def __parse_operand(self, string, index):
+        parse = self.__parse(string, index, "class")
+        if parse != self.FAIL:
+            return parse
         parse = self.__parse(string, index, "parenthesis")
         if parse != self.FAIL:
             return parse
@@ -1156,16 +1161,53 @@ class Parser:
         return_statement.children.append(expression_parse)
         return return_statement
 
+    def __parse_class(self, string, index):
+        class_identifier = string[index: index + 5]  # parse "class"
+        index += 5
+        if class_identifier != "class":
+            return self.FAIL
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != "{":
+            return self.FAIL
+        index += 1
+        class_parse = StatementParse(index, "class")
+        parse = None  # declare parse
+        while index < len(string) and parse != self.FAIL:
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            declaration_statement = self.__parse(string, index, "declaration_statement")
+            if declaration_statement == self.FAIL:
+                parse = self.FAIL
+                break
+            class_parse.children.append(declaration_statement)
+            index = declaration_statement.index
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        if string[index] != "}":
+            return self.FAIL
+        index += 1
+        class_parse.index = index
+        return class_parse
+
     def test(self):
         parser = Parser()
         interpreter = Interpreter()
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
-        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6 FIXME prob in add sub
+        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# This should also create a syntax error because the parser isn’t able to successfully parse the entire expression.
-# Once it does “( 3 “ it expects either an operator or a closed parenthesis, not another open one.
-print ( 3 ( 4 ( 5 ) ) );
+        var alpha = class {
+        var ex = func(){
+        print 6;
+        };
+        };
+        
+        
+        
 
 ''')  # test for function insdie of a dunction
         # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction

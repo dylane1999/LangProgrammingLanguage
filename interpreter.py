@@ -101,7 +101,6 @@ class Interpreter:
         except ValueError as error:
             raise error
 
-    # add a method here to get a var FIXME add an eval ! expression
 
     def __execute_program(self, program):
         for node in program.children:
