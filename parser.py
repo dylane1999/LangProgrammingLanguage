@@ -605,6 +605,8 @@ class Parser:
         identifier_parse = self.__parse(string, index, "identifier_char")  # parse for remaining chars
         parsed += identifier_parse.value
         index = identifier_parse.index  # add index and value
+        if self.__check_forbidden_names(parsed):
+            return self.FAIL
         return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
 
     def __parse_location(self, string, index):
@@ -1200,11 +1202,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-        var alpha = class {
-        var ex = func(){
-        print 6;
-        };
-        };
+print + 0;
+
         
         
         
