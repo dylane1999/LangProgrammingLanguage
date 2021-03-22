@@ -111,7 +111,8 @@ class Interpreter:
 
     def __execute_return(self, node):
         if self.function_call_depth <= 0:
-            raise ValueError("runtime error: can not return outside of a function")
+            self.output = "runtime error: returning outside function"
+            raise ValueError("runtime error: returning outside function")
         return_value = self.__eval(node.children[0])
         self.isReturning = True
         self.return_value = return_value
