@@ -1224,9 +1224,11 @@ class Parser:
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
         identifier_parse = self.__parse(string, index, "identifier")
+        if identifier_parse == self.FAIL:
+            return self.FAIL
         index = identifier_parse.index
         parsed += "." + identifier_parse.value
-        return Parse(parsed, index)
+        return identifier_parse
 
     def __parse_call_member(self, string, index):
         function_call = self.__parse(string, index, "function_call")
@@ -1275,8 +1277,18 @@ class Parser:
 
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
+        # var
+        # foo =
+        #
+
         term = parser.parse('''
-var wolf = func(){};
+                class {
+        var bar = func(this){
+        };
+
+        };
+        
+        foo.bar();
 
         
 
