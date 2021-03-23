@@ -231,6 +231,12 @@ class Parser:
             return self.__parse_tab(string, index)
         elif term == "class":
             return self.__parse_class(string, index)
+        elif term == "member":
+            return self.__parse_member(string, index)
+        elif term == "call_member":
+            return self.__parse_call_member(string, index)
+        elif term == "call_member_expression":
+            return self.__parse_call_member_expression(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
 
@@ -405,7 +411,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
         if op_space != self.FAIL:
             index = op_space.index
-        left_parse = self.__parse(string, index, "call_expression")  # parses the int at start of expression
+        left_parse = self.__parse(string, index, "call_member_expression")  # parses the int at start of expression
         if left_parse == self.FAIL:
             return self.FAIL
         index = left_parse.index  # if not fail add result & index
@@ -423,7 +429,7 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
             if op_space != self.FAIL:
                 index = op_space.index
-            right_parse = self.__parse(string, index, "call_expression")  # parse next operand; index +1 for "* | /"
+            right_parse = self.__parse(string, index, "call_member_expression")  # parse next operand; index +1 for "* | /"
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
@@ -613,6 +619,20 @@ class Parser:
         parse_identifier = self.__parse(string, index, "identifier")
         if parse_identifier == self.FAIL:
             return self.FAIL
+        index = parse_identifier.index
+        parse = None
+        while index < len(string) and parse != self.FAIL:
+            if string[index] != ".":
+                parse = self.FAIL
+                break
+            index += 1
+            next_identifier = self.__parse(string, index, "identifier")
+            if next_identifier == self.FAIL:
+                parse = self.FAIL
+                return self.FAIL
+            index = next_identifier.index
+            parse_identifier.children.append(next_identifier)
+        parse_identifier.index = index
         return parse_identifier
 
     def __parse_assignment_statement(self, string, index):
@@ -1195,6 +1215,60 @@ class Parser:
         class_parse.index = index
         return class_parse
 
+    def __parse_member(self, string, index):
+        parsed = ""
+        if string[index] != ".":
+            return self.FAIL
+        index += 1
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        identifier_parse = self.__parse(string, index, "identifier")
+        index = identifier_parse.index
+        parsed += "." + identifier_parse.value
+        return Parse(parsed, index)
+
+    def __parse_call_member(self, string, index):
+        function_call = self.__parse(string, index, "function_call")
+        if function_call != self.FAIL:
+            return function_call
+        member = self.__parse(string, index, "member")
+        if member != self.FAIL:
+            return member
+        return self.FAIL
+
+    def __parse_call_member_expression(self, string, index):  # make it so that only a valid opernad can be called
+        operand_parse = self.__parse(string, index, "operand")
+        if operand_parse == self.FAIL:
+            return self.FAIL
+        index = operand_parse.index
+        parent = None
+        parse = None
+        lhs = operand_parse
+        while index < len(string) and parse != self.FAIL:
+            op_space = self.__parse(string, index, "op_space")  # parse optional space
+            if op_space != self.FAIL:
+                index = op_space.index  # add op_space to index
+            call_parse = self.__parse(string, index, "call_member")
+            if call_parse == self.FAIL:
+                parse = self.FAIL
+                break
+            operand_validity = self.__test_identifier_first_char(operand_parse.value)
+            if not operand_validity:  # if the first char of the identifier is not a letter or underscore then fail
+                return self.FAIL
+            index = call_parse.index  # set index to funct call parse
+            parent = CallExpression(index, "call", operand_parse.value)
+            parent.children.append(lhs)
+            parent.children.append(call_parse)  # add the function arguments
+            lhs = parent
+        if parent is None:
+            return operand_parse
+        parent.index = index  # set call exp index to index
+        return parent
+
+
+
+
     def test(self):
         parser = Parser()
         interpreter = Interpreter()
@@ -1202,13 +1276,8 @@ class Parser:
         # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         term = parser.parse('''
-# Tests calling non-functions
-var x = 0;
-x();
+var wolf = func(){};
 
-
-        
-        
         
 
 ''')  # test for function insdie of a dunction
