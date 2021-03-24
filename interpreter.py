@@ -184,11 +184,28 @@ class Interpreter:
     def __eval_function(self, node):
         current_env = self.environment  # copy the current env
         function_params = node.children[0].children
+        contains_duplicates = self.__check_duplicate_args(function_params)
+        if contains_duplicates:
+            self.output += "runtime error: duplicate parameter" + "\n"
+            raise ValueError("runtime error: duplicate parameter")
         params_array = []
         for param in function_params:
             params_array.append(param.value)
         function_closure = self.Closure(node, current_env, params_array)
         return function_closure
+
+    def __check_duplicate_args(self, argumentsArray):
+        ''' Check if given list contains any duplicates '''
+        args_as_strings =[]
+        for arg in argumentsArray:
+            args_as_strings.append(arg.value)
+        values = {k:0 for k in args_as_strings}
+        for arg in args_as_strings:
+            values[arg] += 1
+            if values[arg] > 1:
+                return True
+        return False
+
 
     def __eval_function_call(self, node):
         self.function_call_depth += 1  # set current depth plus one

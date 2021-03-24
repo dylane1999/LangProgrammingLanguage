@@ -1288,7 +1288,12 @@ class Parser:
         #
 
         term = parser.parse('''
-        func(){print 5;}();
+var foo = func(a, b, a) {
+    print a;
+    print b;
+};
+foo(1, 2, 3);
+
 
 
 
