@@ -1281,7 +1281,12 @@ class Parser:
         # foo =
         #
 
-        term = parser.parse('''a = 1 / 0;
+        term = parser.parse('''
+        var run_first = func() {
+    print 42;
+};
+nonexistant = run_first();
+
 
 
         

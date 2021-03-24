@@ -111,7 +111,7 @@ class Interpreter:
 
     def __execute_return(self, node):
         if self.function_call_depth <= 0:
-            self.output = "runtime error: returning outside function"
+            self.output += "runtime error: returning outside function" + "\n"
             raise ValueError("runtime error: returning outside function")
         return_value = self.__eval(node.children[0])
         self.isReturning = True
@@ -151,7 +151,7 @@ class Interpreter:
         # if item already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
-            self.output = "runtime error: variable already defined"
+            self.output += "runtime error: variable already defined" + "\n"
             raise ValueError("runtime error: variable already defined")
         self.environment.variable_map[variable_name] = val_to_be_assigned
         # return
@@ -199,10 +199,10 @@ class Interpreter:
             # function_env = self.__eval(node.children[0])  # get the closure through eval lookup
             closure = self.__eval(node.children[0])  # get the closure through eval lookup
         if closure is None:
-            self.output = "runtime error: undefined function"
+            self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
         if not isinstance(closure, self.Closure):
-            self.output = "runtime error: calling a non-function"
+            self.output += "runtime error: calling a non-function" + "\n"
             raise ValueError("runtime error: calling a non-function")
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
@@ -215,7 +215,7 @@ class Interpreter:
         self.__push_env()  # push a new env on stack
         # check that the len of closure params and call args are the same
         if len(closure.parameters) != len(evaluated_args):
-            self.output = "runtime error: incorrect number of arguments"
+            self.output += "runtime error: incorrect number of arguments" + "\n"
             raise ValueError("runtime error: incorrect number of arguments")
         for i in range(len(closure.parameters)):
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
@@ -240,7 +240,7 @@ class Interpreter:
                     break
                 env = env.previous_env
         except AttributeError:
-            self.output = "runtime error: undefined variable"
+            self.output += "runtime error: undefined variable" + "\n"
             raise ValueError("runtime error: undefined variable")
         return result_env
 
@@ -254,7 +254,7 @@ class Interpreter:
                 break
             env = env.previous_env
         if env is None:
-            self.output = "runtime error: undefined variable"
+            self.output += "runtime error: undefined variable" + "\n"
             raise ValueError("runtime error: undefined variable")
         result_value = result_env.variable_map[variable_name]
         return result_value
@@ -263,7 +263,7 @@ class Interpreter:
         left_sum = self.__eval(node.children[0])
         right_sum = self.__eval(node.children[1])
         if isinstance(left_sum, self.Closure) or isinstance(right_sum, self.Closure):
-            self.output = "runtime error: math operation on functions"
+            self.output += "runtime error: math operation on functions" + "\n"
             raise ValueError("runtime error: math operation on functions")
         sum = left_sum + right_sum
         return sum
@@ -272,7 +272,7 @@ class Interpreter:
         left_difference = self.__eval(node.children[0])
         right_difference = self.__eval(node.children[1])
         if isinstance(left_difference, self.Closure) or isinstance(right_difference, self.Closure):
-            self.output = "runtime error: math operation on functions"
+            self.output += "runtime error: math operation on functions" + "\n"
             raise ValueError("runtime error: math operation on functions")
         difference = left_difference - right_difference
         return difference
@@ -281,10 +281,10 @@ class Interpreter:
         left_divide = self.__eval(node.children[0])
         right_divide = self.__eval(node.children[1])
         if isinstance(left_divide, self.Closure) or isinstance(right_divide, self.Closure):
-            self.output = "runtime error: math operation on functions"
+            self.output += "runtime error: math operation on functions" + "\n"
             raise ValueError("runtime error: math operation on functions")
         if right_divide == 0:
-            self.output = "runtime error: divide by zero"
+            self.output += "runtime error: divide by zero" + "\n"
             raise ValueError("runtime error: divide by zero")
         quotient = left_divide // right_divide
         return quotient
@@ -293,7 +293,7 @@ class Interpreter:
         left_mult = self.__eval(node.children[0])
         right_mult = self.__eval(node.children[1])
         if isinstance(left_mult, self.Closure) or isinstance(right_mult, self.Closure):
-            self.output = "runtime error: math operation on functions"
+            self.output += "runtime error: math operation on functions" + "\n"
             raise ValueError("runtime error: math operation on functions")
         product = left_mult * right_mult
         return product
