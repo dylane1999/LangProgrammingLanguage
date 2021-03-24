@@ -576,8 +576,11 @@ class Parser:
         print_statement.children.append(expression_parse)
         return print_statement
 
-    def __test_identifier_first_char(self, string):
+    def __test_identifier_first_char(self, operand):
+        if operand.type == "function":
+            return True
         parsed = ""
+        string = operand.value
         if (not string[0].isalpha()) and (string[0] != "_"):  # if string is not a letter and string not a _
             return False
             # raise ValueError("starts with illegal char")
@@ -1255,10 +1258,13 @@ class Parser:
             if call_parse == self.FAIL:
                 parse = self.FAIL
                 break
-            operand_validity = self.__test_identifier_first_char(operand_parse.value)
+            x = None
+            operand_validity = self.__test_identifier_first_char(operand_parse)
             if not operand_validity:  # if the first char of the identifier is not a letter or underscore then fail
                 return self.FAIL
             index = call_parse.index  # set index to funct call parse
+            if operand_parse.type == "function":
+                operand_parse.value = ""
             parent = CallExpression(index, "call", operand_parse.value)
             parent.children.append(lhs)
             parent.children.append(call_parse)  # add the function arguments
@@ -1282,10 +1288,7 @@ class Parser:
         #
 
         term = parser.parse('''
-        var run_first = func() {
-    print 42;
-};
-nonexistant = run_first();
+        func(){print 5;}();
 
 
 
