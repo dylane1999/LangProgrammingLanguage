@@ -1281,14 +1281,8 @@ class Parser:
         # foo =
         #
 
-        term = parser.parse('''
-                class {
-        var bar = func(this){
-        };
+        term = parser.parse('''a = 1 / 0;
 
-        };
-        
-        foo.bar();
 
         
 

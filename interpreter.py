@@ -137,12 +137,15 @@ class Interpreter:
         return
 
     def __execute_assignment_statement(self, node):
+        val_to_be_assigned =  self.__eval(node.children[1])
         lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
-        env.variable_map[lookup.value] = self.__eval(node.children[1])  # set the var in the env = to the expression
+        env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
         pass
 
     def __execute_declaration_statement(self, node):
+        # eval the value on left side
+        val_to_be_assigned = self.__eval(node.children[1])
         # eval things on the right side of the equation
         variable_name = node.children[0].value
         # if item already in keys throw a already declared error
@@ -150,7 +153,7 @@ class Interpreter:
         if variable_name in declared_vars:
             self.output = "runtime error: variable already defined"
             raise ValueError("runtime error: variable already defined")
-        self.environment.variable_map[variable_name] = self.__eval(node.children[1])
+        self.environment.variable_map[variable_name] = val_to_be_assigned
         # return
 
     def __execute_if_statement(self, node):
