@@ -15,6 +15,11 @@ class Interpreter:
             self.environment = environment
             self.parameters = parameters
 
+    class Class:
+        def __init__(self, parse, environment):
+            self.parse = parse
+            self.environment = environment
+
     class Environment:
 
         def __init__(self, variable_map, previous_env):
@@ -96,6 +101,8 @@ class Interpreter:
                 return self.__eval_function(node)
             elif node.type == "call":
                 return self.__eval_function_call(node)
+            elif node.type == "class":
+                return self.__eval_class(node)
             else:
                 raise ValueError("unknown eval type")
         except ValueError as error:
@@ -181,19 +188,6 @@ class Interpreter:
             self.__execute(node.children[1])
             self.__pop_env()
 
-    def __eval_function(self, node):
-        current_env = self.environment  # copy the current env
-        function_params = node.children[0].children
-        contains_duplicates = self.__check_duplicate_args(function_params)
-        if contains_duplicates:
-            self.output += "runtime error: duplicate parameter" + "\n"
-            raise ValueError("runtime error: duplicate parameter")
-        params_array = []
-        for param in function_params:
-            params_array.append(param.value)
-        function_closure = self.Closure(node, current_env, params_array)
-        return function_closure
-
     def __check_duplicate_args(self, argumentsArray):
         ''' Check if given list contains any duplicates '''
         args_as_strings =[]
@@ -207,6 +201,20 @@ class Interpreter:
         return False
 
 
+    def __eval_function(self, node):
+        current_env = self.environment  # copy the current env
+        function_params = node.children[0].children
+        contains_duplicates = self.__check_duplicate_args(function_params)
+        if contains_duplicates:
+            self.output += "runtime error: duplicate parameter" + "\n"
+            raise ValueError("runtime error: duplicate parameter")
+        params_array = []
+        for param in function_params:
+            params_array.append(param.value)
+        function_closure = self.Closure(node, current_env, params_array)
+        return function_closure
+
+
     def __eval_function_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
         if node.children[0].type == "call":   # if child is a call eval call to get closure
@@ -218,9 +226,11 @@ class Interpreter:
         if closure is None:
             self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
-        if not isinstance(closure, self.Closure):
+        if not (isinstance(closure, self.Closure) or  isinstance(closure, self.Class)):
             self.output += "runtime error: calling a non-function" + "\n"
             raise ValueError("runtime error: calling a non-function")
+        if isinstance(closure, self.Class):
+            return closure
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
@@ -245,6 +255,17 @@ class Interpreter:
         self.isReturning = False
         self.function_call_depth -= 1  # decrease function depth by one
         return return_value #return 0 or the return value
+
+
+
+    def __eval_class(self, node):
+        self.__push_env()
+        for child in node.children:
+            self.__execute(child)
+        class_env = self.environment
+        callable = self.Class(node, class_env)
+        self.__pop_env()
+        return callable
 
     def __eval_varloc(self, node):
         variable_name = node.value
