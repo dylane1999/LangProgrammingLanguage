@@ -52,8 +52,24 @@ class CallExpression(StatementParse):
 
     def __init__(self, index, type, func_name):
         super().__init__(index, type)
-        self.children = []
+        # self.children = []
         self.func_name = func_name
+
+class MemberCallExpression(StatementParse):
+
+    def __init__(self, index, type):
+        super().__init__(index, type)
+        # self.children = [] included in statement parse
+
+    def __str__(self):
+        # if statement parse print the operator type and children to string
+        expression_result = ""
+        expression_result += "("
+        expression_result += self.type
+        for child in self.children:
+            expression_result += " " + child.__str__()
+        expression_result += ")"
+        return expression_result
 
 
 class IdentifierParse(StatementParse):  # type of varloc or lookup, parse of an identifer
@@ -106,6 +122,32 @@ class ParametersParse(IdentifierParse):  # should have a type of varloc  (declar
     def __str__(self):
         result = self.value
         return result
+
+class MemberLocationParse(IdentifierParse):  # should have a type of memloc
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+        self.children = []
+
+    def __str__(self):
+        # return the value + varloc
+        expression_result = "("
+        expression_result += self.type + " "
+        expression_result += self.value
+        for child in self.children:
+            expression_result += " " + child.__str__()
+        expression_result += ")"
+        return expression_result
+
+class MemberParse(IdentifierParse):  # should have a type of varloc  (declare)
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+
+    def __str__(self):
+        result = self.value
+        return result
+
+
+
 
 
 class ProgramParse():
@@ -619,6 +661,7 @@ class Parser:
         return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
 
     def __parse_location(self, string, index):
+        isMember = False #init member as false initialy
         parse_identifier = self.__parse(string, index, "identifier")
         if parse_identifier == self.FAIL:
             return self.FAIL
@@ -635,8 +678,18 @@ class Parser:
                 return self.FAIL
             index = next_identifier.index
             parse_identifier.children.append(next_identifier)
+            isMember = True
         parse_identifier.index = index
+        if isMember:
+            member_location = MemberLocationParse(next_identifier.value, index, "memloc")
+            member_location.children.append(parse_identifier)
+            return member_location
         return parse_identifier
+
+    # # if not a member change var_lovation to be a VarLocation parse object
+    # var_location = location_parse
+    # if location_parse.type != "memloc":  # if not a member location make a var location
+    #     var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
 
     def __parse_assignment_statement(self, string, index):
         location_parse = self.__parse(string, index, "location")  # parse the location
@@ -644,7 +697,8 @@ class Parser:
             return self.FAIL
         if self.__check_forbidden_names(location_parse.value):  # pass var name as arg
             return self.FAIL
-        # change var_lovation to be a VarLocation parse object
+        #FIXME must make into a varloc and keetp as memloc if a member location
+        #change var_lovation to be a VarLocation parse object
         var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
         index = var_location.index  # add var_location index
         op_space = self.__parse(string, index, "op_space")
@@ -1085,35 +1139,6 @@ class Parser:
         else:
             return Parse("", index)
 
-    def __parse_call_expression(self, string, index):  # make it so that only a valid opernad can be called
-        operand_parse = self.__parse(string, index, "operand")
-        if operand_parse == self.FAIL:
-            return self.FAIL
-        index = operand_parse.index
-        parent = None
-        parse = None
-        lhs = operand_parse
-        while index < len(string) and parse != self.FAIL:
-            op_space = self.__parse(string, index, "op_space")  # parse optional space
-            if op_space != self.FAIL:
-                index = op_space.index  # add op_space to index
-            function_call_parse = self.__parse(string, index, "function_call")
-            if function_call_parse == self.FAIL:
-                parse = self.FAIL
-                break
-            operand_validity = self.__test_identifier_first_char(operand_parse.value)
-            if not operand_validity:  # if the first char of the identifier is not a letter or underscore then fail
-                return self.FAIL
-            index = function_call_parse.index  # set index to funct call parse
-            parent = CallExpression(index, "call", operand_parse.value)
-            parent.children.append(lhs)
-            parent.children.append(function_call_parse)  # add the function arguments
-            lhs = parent
-        if parent is None:
-            return operand_parse
-        parent.index = index  # set call exp index to index
-        return parent
-
     def __parse_function_call(self, string, index):
         if string[index] != "(":
             return self.FAIL
@@ -1230,7 +1255,8 @@ class Parser:
         if identifier_parse == self.FAIL:
             return self.FAIL
         index = identifier_parse.index
-        parsed += "." + identifier_parse.value
+        # parsed += "." + identifier_parse.value
+        # member_parse = MemberParse(index, "member", identifier_parse.value)
         return identifier_parse
 
     def __parse_call_member(self, string, index):
@@ -1265,6 +1291,14 @@ class Parser:
             index = call_parse.index  # set index to funct call parse
             if operand_parse.type == "function":
                 operand_parse.value = ""
+            expression_type = "call"
+            if call_parse.type == "lookup":
+                parent = MemberCallExpression(index, "member")
+                parent.children.append(lhs)
+                member_parse = MemberParse(call_parse.value, call_parse.index, "member_parse")
+                parent.children.append(member_parse)
+                lhs = parent
+                continue
             parent = CallExpression(index, "call", operand_parse.value)
             parent.children.append(lhs)
             parent.children.append(call_parse)  # add the function arguments
@@ -1274,7 +1308,7 @@ class Parser:
         parent.index = index  # set call exp index to index
         return parent
 
-
+    # (print(member(lookup consts) pi))
 
 
     def test(self):
@@ -1285,14 +1319,11 @@ class Parser:
         # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
         # var
         # foo =
-        #
+        # this is for identifier  consts.ee();
+        # var car.boot = consts.ee();
 
         term = parser.parse('''
-var foo = func(a, b, a) {
-    print a;
-    print b;
-};
-foo(1, 2, 3);
+   print half.num;
 
 
 
@@ -1307,7 +1338,7 @@ foo(1, 2, 3);
         print(term.__str__())
         x = interpreter.execute(term)
         #  ret inner;
-
+#
 
 #  var a = 1; var outer = func(){ var a = 2; var inner = func(){ print a;}; ret inner ; };
 def test_parse(parser, string, term, expected):
