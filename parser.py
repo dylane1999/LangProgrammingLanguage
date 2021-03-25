@@ -131,8 +131,7 @@ class MemberLocationParse(IdentifierParse):  # should have a type of memloc
     def __str__(self):
         # return the value + varloc
         expression_result = "("
-        expression_result += self.type + " "
-        expression_result += self.value
+        expression_result += self.type
         for child in self.children:
             expression_result += " " + child.__str__()
         expression_result += ")"
@@ -697,9 +696,11 @@ class Parser:
             return self.FAIL
         if self.__check_forbidden_names(location_parse.value):  # pass var name as arg
             return self.FAIL
-        #FIXME must make into a varloc and keetp as memloc if a member location
-        #change var_lovation to be a VarLocation parse object
         var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
+        if location_parse.type == "memloc": # override varloc with the child of memloc if type memloc
+            var_location = MemberLocationParse(location_parse.value, location_parse. index, "memloc")
+            var_location.children.append(AssignLocationParse(location_parse.children[0].value, location_parse.index, "varloc"))
+            var_location.children.append(location_parse.value)
         index = var_location.index  # add var_location index
         op_space = self.__parse(string, index, "op_space")
         if op_space != self.FAIL:
@@ -1323,7 +1324,9 @@ class Parser:
         # var car.boot = consts.ee();
 
         term = parser.parse('''
-   print half.num;
+   
+   half.num = 0;
+   
 
 
 
