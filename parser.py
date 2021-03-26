@@ -1328,10 +1328,15 @@ class Parser:
 var Rational = class {
 var num = 1;
 var denom = 2;
+
+var member_func = func(this){
+    print 100;
+};
 };
 var half = Rational();
 half.num = 0;
 print half.num;
+half.member_func();
 
 
 
