@@ -8,6 +8,7 @@ class Interpreter:
         self.return_value = 0
         self.isReturning = False
         self.output = ""
+        self.definingMethod = False
 
     class Closure:
         def __init__(self, parse, environment, parameters):
@@ -15,6 +16,7 @@ class Interpreter:
             self.environment = environment
             self.parameters = parameters
             self.type = "closure"
+            self.isMethod = False
 
     class Class:
         def __init__(self, parse, environment):
@@ -217,6 +219,15 @@ class Interpreter:
                 return True
         return False
 
+    def __check_for_this(self, argumentsArray):
+        ''' Check if given list contains any duplicates '''
+        args_as_strings =[]
+        for arg in argumentsArray:
+            args_as_strings.append(arg.value)
+        if "this" in args_as_strings:
+            return True
+        self.output += "runtime error: argument mismatch" + "\n"
+        raise ValueError("runtime error: argument mismatch")
 
     def __eval_function(self, node):
         current_env = self.environment  # copy the current env
@@ -229,6 +240,9 @@ class Interpreter:
         for param in function_params:
             params_array.append(param.value)
         function_closure = self.Closure(node, current_env, params_array)
+        if self.definingMethod:
+            self.__check_for_this(function_params)
+            function_closure.isMethod = True
         return function_closure
 
 
@@ -254,6 +268,8 @@ class Interpreter:
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
         evaluated_args = []
+        if closure.isMethod:
+            evaluated_args.append(closure)  # if a closure, append the class instance for the "this"
         for arg in arguments:
             evaluated_args.append(self.__eval(arg))
         current_env = self.environment
@@ -261,8 +277,8 @@ class Interpreter:
         self.__push_env()  # push a new env on stack
         # check that the len of closure params and call args are the same
         if len(closure.parameters) != len(evaluated_args):
-            self.output += "runtime error: incorrect number of arguments" + "\n"
-            raise ValueError("runtime error: incorrect number of arguments")
+            self.output += "runtime error: argument mismatch" + "\n"
+            raise ValueError("runtime error: argument mismatch")
         for i in range(len(closure.parameters)):
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
         function_program = closure.parse.children[1]
@@ -279,11 +295,13 @@ class Interpreter:
 
     def __eval_class(self, node):
         self.__push_env()
+        self.definingMethod = True
         for child in node.children:
             self.__execute(child)
         class_env = self.environment
         callable = self.Class(node, class_env)
         self.__pop_env()
+        self.definingMethod = False
         return callable
 
     def __eval_memloc(self, node):
