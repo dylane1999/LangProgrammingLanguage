@@ -1325,8 +1325,13 @@ class Parser:
 
         term = parser.parse('''
    
-   half.num = 0;
-   
+var Rational = class {
+var num = 1;
+var denom = 2;
+};
+var half = Rational();
+half.num = 0;
+print half.num;
 
 
 
