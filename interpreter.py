@@ -14,11 +14,20 @@ class Interpreter:
             self.parse = parse
             self.environment = environment
             self.parameters = parameters
+            self.type = "closure"
 
     class Class:
         def __init__(self, parse, environment):
             self.parse = parse
             self.environment = environment
+            self.type = "class"
+
+    class ClassInstance:
+        def __init__(self, parse, environment, parent):
+            self.parse = parse
+            self.environment = environment
+            self.type = "class_instance"
+            self.instanceOf = parent
 
     class Environment:
 
@@ -100,9 +109,13 @@ class Interpreter:
             elif node.type == "function":
                 return self.__eval_function(node)
             elif node.type == "call":
-                return self.__eval_function_call(node)
+                return self.__eval_call(node)
             elif node.type == "class":
                 return self.__eval_class(node)
+            elif node.type == "memloc":
+                return self.__eval_memloc(node)
+            elif node.type == "member":
+                return self.__eval_member(node)
             else:
                 raise ValueError("unknown eval type")
         except ValueError as error:
@@ -147,8 +160,12 @@ class Interpreter:
         val_to_be_assigned =  self.__eval(node.children[1])
         lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
-        env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
-        pass
+        try:
+            env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
+        except Exception:
+            self.output += "runtime error: member does not exist" + "\n"
+            raise ValueError("runtime error: member does not exist")
+        return
 
     def __execute_declaration_statement(self, node):
         # eval the value on left side
@@ -215,7 +232,7 @@ class Interpreter:
         return function_closure
 
 
-    def __eval_function_call(self, node):
+    def __eval_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
         if node.children[0].type == "call":   # if child is a call eval call to get closure
             closure = self.__eval(node.children[0])
@@ -230,7 +247,9 @@ class Interpreter:
             self.output += "runtime error: calling a non-function" + "\n"
             raise ValueError("runtime error: calling a non-function")
         if isinstance(closure, self.Class):
-            return closure
+            #declare a class instance
+            classInstance = self.ClassInstance(closure.parse, closure.environment, node.func_name)
+            return classInstance
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
@@ -266,6 +285,29 @@ class Interpreter:
         callable = self.Class(node, class_env)
         self.__pop_env()
         return callable
+
+    def __eval_memloc(self, node):
+        try:
+            instance_location = self.__eval(node.children[0])
+            instance_name = node.children[0].value
+            class_instance = instance_location.variable_map[instance_name]
+            class_env = class_instance.environment
+            return class_env
+        except AttributeError:
+            self.output += "runtime error: undefined variable" + "\n"
+            raise ValueError("runtime error: undefined variable")
+        return
+
+        # return
+        # pass
+
+
+    def __eval_member(self, node):
+        class_instance = self.__eval(node.children[0])  # eval class lookup
+        member = node.children[1].value
+        value = class_instance.environment.variable_map[member]
+        return value
+
 
     def __eval_varloc(self, node):
         variable_name = node.value
