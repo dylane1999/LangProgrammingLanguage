@@ -1,4 +1,5 @@
 from interpreter import Interpreter
+import sys
 
 
 class Parse:
@@ -1322,21 +1323,155 @@ class Parser:
         # foo =
         # this is for identifier  consts.ee();
         # var car.boot = consts.ee();
-
+        sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-   
-var Rational = class {
-var num = 1;
-var denom = 2;
+        
+var
+BinarySearchTree =
 
-var member_func = func(this){
-    print 100;
+
+class {
+var Node =
+
+
+class {
+var value = 0;
+var left = 0;
+var right = 0;
+var constructor = func(this, value) {
+this.value = value;
+ret this;
 };
 };
-var half = Rational();
-half.num = 0;
-print half.num;
-half.member_func();
+
+
+var
+root = 0;
+var
+debug_start = 0;
+var
+constructor = func(this)
+{
+    ret
+this;
+};
+
+var
+test = func(this, value)
+{
+    root = test_recur(root, value);
+};
+
+var
+test_recur = func(this, node, value)
+{
+    print
+value;
+print
+node;
+};
+var
+add = func(this, value)
+{
+    # print root;
+    root = recur_add(root, value);
+
+};
+
+var
+print_nodes = func(this, node)
+{
+if (node != 0)
+{
+    print
+node.value;
+print
+node.left;
+print
+node.right;
+print
+9999999;
+if (node.left != node & & node.left != 0)
+{
+    this.print_nodes(node.left);
+}
+if (node.right != node & & node.right != 0) {
+this.print_nodes(node.right);
+}
+}
+else {
+print 111111111;
+}
+};
+
+var
+recur_add = func(this, node, value)
+{
+    # if (node == 0){
+    # debug_start = 0;}
+    # else{
+    # debug_start = node.value == 9;
+    # }
+
+    this.print_nodes(node);
+if (node != 0)
+{
+    # print node.value;
+}
+if (node == 0)
+{
+    # print 11;
+    ret
+Node().constructor(value);
+}
+if (value <= node.value) {
+var temp = this.recur_add(node.left, value);
+this.print_nodes(temp);
+node.left = temp;  # fixme
+this.print_nodes(temp);
+this.print_nodes(node.left);
+this.print_nodes(node);
+ret node;
+}
+if (value > node.value) {
+# print 31;
+node.right = recur_add(node.right, value);
+ret node;
+}
+};
+var
+in_order_print = func(this)
+{
+    recur_in_order_print(root);
+};
+var
+recur_in_order_print = func(this, node)
+{
+if (node != 0)
+{
+    recur_in_order_print(node.left);
+print
+node.value;
+recur_in_order_print(node.right);
+}
+};
+};
+var tree = BinarySearchTree().constructor();
+tree.add(9);
+tree.print_nodes(tree.root);
+# <class 'dict'>: {'value': 9, 'left': 0, 'right': 0, 'constructor': <interpreter.Interpreter.Closure object at 0x10bcc55d0>} correct
+print
+2222222;
+# prob occurs here, it adds an infinite number of left nodes... it will have Root with a value 7, w/ many left children all duplicates
+tree.add(7);
+tree.print_nodes(tree.root);
+# print 2222222;
+# tree.add(6);
+# print 333333333;
+
+# prob occurs when a second left/right is added
+
+
 
 
 
@@ -1372,3 +1507,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
