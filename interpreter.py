@@ -17,6 +17,7 @@ class Interpreter:
             self.parameters = parameters
             self.type = "closure"
             self.isMethod = False
+            self.parentInstance = None
 
     class Class:
         def __init__(self, parse, environment):
@@ -75,53 +76,50 @@ class Interpreter:
 
 
     def __eval(self, node):
-        try:
-            if node.type == "+":
-                return self.__eval_plus(node)
-            elif node.type == "-":
-                return self.__eval_minus(node)
-            elif node.type == "*":
-                return self.__eval_mult(node)
-            elif node.type == "/":
-                return self.__eval_divide(node)
-            elif node.type == "int":
-                return self.__eval_int(node)
-            elif node.type == "lookup":
-                return self.__eval_lookup(node)
-            elif node.type == "varloc":
-                return self.__eval_varloc(node)
-            elif node.type == "==":
-                return self.__eval_equals(node)
-            elif node.type == "!=":
-                return self.__eval_not_equals(node)
-            elif node.type == "!":
-                return self.__eval_not(node)
-            elif node.type == "<=":
-                return self.__eval_less_than_equal(node)
-            elif node.type == ">=":
-                return self.__eval_greater_than_equal(node)
-            elif node.type == "<":
-                return self.__eval_less_than(node)
-            elif node.type == ">":
-                return self.__eval_greater_than(node)
-            elif node.type == "&&":
-                return self.__eval_and_statement(node)
-            elif node.type == "||":
-                return self.__eval_or_statement(node)
-            elif node.type == "function":
-                return self.__eval_function(node)
-            elif node.type == "call":
-                return self.__eval_call(node)
-            elif node.type == "class":
-                return self.__eval_class(node)
-            elif node.type == "memloc":
-                return self.__eval_memloc(node)
-            elif node.type == "member":
-                return self.__eval_member(node)
-            else:
-                raise ValueError("unknown eval type")
-        except ValueError as error:
-            raise error
+        if node.type == "+":
+            return self.__eval_plus(node)
+        elif node.type == "-":
+            return self.__eval_minus(node)
+        elif node.type == "*":
+            return self.__eval_mult(node)
+        elif node.type == "/":
+            return self.__eval_divide(node)
+        elif node.type == "int":
+            return self.__eval_int(node)
+        elif node.type == "lookup":
+            return self.__eval_lookup(node)
+        elif node.type == "varloc":
+            return self.__eval_varloc(node)
+        elif node.type == "==":
+            return self.__eval_equals(node)
+        elif node.type == "!=":
+            return self.__eval_not_equals(node)
+        elif node.type == "!":
+            return self.__eval_not(node)
+        elif node.type == "<=":
+            return self.__eval_less_than_equal(node)
+        elif node.type == ">=":
+            return self.__eval_greater_than_equal(node)
+        elif node.type == "<":
+            return self.__eval_less_than(node)
+        elif node.type == ">":
+            return self.__eval_greater_than(node)
+        elif node.type == "&&":
+            return self.__eval_and_statement(node)
+        elif node.type == "||":
+            return self.__eval_or_statement(node)
+        elif node.type == "function":
+            return self.__eval_function(node)
+        elif node.type == "call":
+            return self.__eval_call(node)
+        elif node.type == "class":
+            return self.__eval_class(node)
+        elif node.type == "memloc":
+            return self.__eval_memloc(node)
+        elif node.type == "member":
+            return self.__eval_member(node)
+        else:
+            raise ValueError("unknown eval type")
 
 
     def __execute_program(self, program):
@@ -160,15 +158,18 @@ class Interpreter:
 
     def __execute_assignment_statement(self, node):
         val_to_be_assigned =  self.__eval(node.children[1])
+        x = self.__eval(node.children[0])
         lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
-        try:
-            env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
-        except Exception:
-            self.output += "runtime error: member does not exist" + "\n"
-            raise ValueError("runtime error: member does not exist")
+        if node.children[0].type == "memloc" and (lookup.value not in env.variable_map.keys()):
+            self.output += "runtime error: undefined member" + "\n"
+            raise ValueError("runtime error: undefined member")
+        env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
+        #fails when assignig memloc node.left to temp,. it gets the temp env incorrectly
+        # the prib is when its going to get the this, it gets the main env, not the node class env
         return
 
+    # (assign (memloc (varloc this) value) (lookup value))
     def __execute_declaration_statement(self, node):
         # eval the value on left side
         val_to_be_assigned = self.__eval(node.children[1])
@@ -248,12 +249,7 @@ class Interpreter:
 
     def __eval_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
-        if node.children[0].type == "call":   # if child is a call eval call to get closure
-            closure = self.__eval(node.children[0])
-        else:
-            # function_name = node.children[0].value  # if child is not a call get the func name from identifier child
-            # function_env = self.__eval(node.children[0])  # get the closure through eval lookup
-            closure = self.__eval(node.children[0])  # get the closure through eval lookup
+        closure = self.__eval(node.children[0])
         if closure is None:
             self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
@@ -268,8 +264,9 @@ class Interpreter:
         # eval1 = self.__eval(node.children[0])
         arguments = node.children[1].children
         evaluated_args = []
-        if closure.isMethod:
-            evaluated_args.append(closure)  # if a closure, append the class instance for the "this"
+        if closure.isMethod or ("this" in closure.parameters):
+            # FIXME look for the parent/ add the methods's env
+            evaluated_args.append(closure.environment)  # if a closure, append the class instance for the "this"
         for arg in arguments:
             evaluated_args.append(self.__eval(arg))
         current_env = self.environment
@@ -309,6 +306,8 @@ class Interpreter:
             instance_location = self.__eval(node.children[0])
             instance_name = node.children[0].value
             class_instance = instance_location.variable_map[instance_name]
+            if isinstance(class_instance, self.Environment): # if the instance is a class env then return
+                return class_instance
             class_env = class_instance.environment
             return class_env
         except AttributeError:
@@ -323,7 +322,14 @@ class Interpreter:
     def __eval_member(self, node):
         class_instance = self.__eval(node.children[0])  # eval class lookup
         member = node.children[1].value
+        if isinstance(class_instance, self.Environment):
+            class_env = class_instance
+            value = class_env.variable_map[member]
+            return value
         value = class_instance.environment.variable_map[member]
+        if isinstance(value, self.Closure):
+            value.isMethod = True
+            value.parentInstance = class_instance
         return value
 
 
@@ -337,10 +343,11 @@ class Interpreter:
                     result_env = env
                     break
                 env = env.previous_env
+            return result_env
         except AttributeError:
             self.output += "runtime error: undefined variable" + "\n"
             raise ValueError("runtime error: undefined variable")
-        return result_env
+        # may need to check if this return the env
 
     def __eval_lookup(self, node):
         variable_name = node.value
