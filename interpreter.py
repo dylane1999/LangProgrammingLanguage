@@ -1,7 +1,7 @@
-from copy import deepcopy
 
+import sys
 
-class Interpreter:
+class InterpreterService:
     def __init__(self):
         self.environment = self.Environment({}, None)
         self.function_call_depth = 0
@@ -56,24 +56,33 @@ class Interpreter:
 
     def __execute(self, node):
         if node.type == "program":
-                self.__execute_program(node)
+            self.__execute_program(node)
         elif node.type == "print":
-                self.__execute_print(node)
+            self.__execute_print(node)
         elif node.type == "assign":
-                self.__execute_assignment_statement(node)
+            self.__execute_assignment_statement(node)
         elif node.type == "declare":
-                self.__execute_declaration_statement(node)
+            self.__execute_declaration_statement(node)
         elif node.type == "if":
-                self.__execute_if_statement(node)
+            self.__execute_if_statement(node)
         elif node.type == "ifelse":
-                self.__execute_if_else_statement(node)
+            self.__execute_if_else_statement(node)
         elif node.type == "while":
-                self.__execute_while_statement(node)
+            self.__execute_while_statement(node)
         elif node.type == "return":
-                self.__execute_return(node)
+            self.__execute_return(node)
         else:
             self.__eval(node)
 
+    def transform_eval(self, node):
+        if node.type == "+":
+            return self.__eval_plus(node)
+        elif node.type == "-":
+            return self.__eval_minus(node)
+        elif node.type == "*":
+            return self.__eval_mult(node)
+        elif node.type == "/":
+            return self.__eval_divide(node)
 
     def __eval(self, node):
         if node.type == "+":
@@ -121,13 +130,11 @@ class Interpreter:
         else:
             raise ValueError("unknown eval type")
 
-
     def __execute_program(self, program):
         for node in program.children:
             if self.isReturning:
                 break
             self.__execute(node)
-
 
     def __execute_return(self, node):
         if self.function_call_depth <= 0:
@@ -136,7 +143,6 @@ class Interpreter:
         return_value = self.__eval(node.children[0])
         self.isReturning = True
         self.return_value = return_value
-
 
     def __execute_print(self, node):
         expression = self.__eval(node.children[0])
@@ -157,7 +163,7 @@ class Interpreter:
         return
 
     def __execute_assignment_statement(self, node):
-        val_to_be_assigned =  self.__eval(node.children[1])
+        val_to_be_assigned = self.__eval(node.children[1])
         x = self.__eval(node.children[0])
         lookup = node.children[0]  # get the lookup
         env = self.__eval(lookup)
@@ -165,7 +171,7 @@ class Interpreter:
             self.output += "runtime error: undefined member" + "\n"
             raise ValueError("runtime error: undefined member")
         env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
-        #fails when assignig memloc node.left to temp,. it gets the temp env incorrectly
+        # fails when assignig memloc node.left to temp,. it gets the temp env incorrectly
         # the prib is when its going to get the this, it gets the main env, not the node class env
         return
 
@@ -210,10 +216,10 @@ class Interpreter:
 
     def __check_duplicate_args(self, argumentsArray):
         ''' Check if given list contains any duplicates '''
-        args_as_strings =[]
+        args_as_strings = []
         for arg in argumentsArray:
             args_as_strings.append(arg.value)
-        values = {k:0 for k in args_as_strings}
+        values = {k: 0 for k in args_as_strings}
         for arg in args_as_strings:
             values[arg] += 1
             if values[arg] > 1:
@@ -222,7 +228,7 @@ class Interpreter:
 
     def __check_for_this(self, argumentsArray):
         ''' Check if given list contains any duplicates '''
-        args_as_strings =[]
+        args_as_strings = []
         for arg in argumentsArray:
             args_as_strings.append(arg.value)
         if "this" in args_as_strings:
@@ -246,18 +252,17 @@ class Interpreter:
             function_closure.isMethod = True
         return function_closure
 
-
     def __eval_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
         closure = self.__eval(node.children[0])
         if closure is None:
             self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
-        if not (isinstance(closure, self.Closure) or  isinstance(closure, self.Class)):
+        if not (isinstance(closure, self.Closure) or isinstance(closure, self.Class)):
             self.output += "runtime error: calling a non-function" + "\n"
             raise ValueError("runtime error: calling a non-function")
         if isinstance(closure, self.Class):
-            #declare a class instance
+            # declare a class instance
             classInstance = self.ClassInstance(closure.parse, closure.environment, node.func_name)
             return classInstance
         # if isinstance()
@@ -286,9 +291,7 @@ class Interpreter:
         self.return_value = 0  # set return value back
         self.isReturning = False
         self.function_call_depth -= 1  # decrease function depth by one
-        return return_value #return 0 or the return value
-
-
+        return return_value  # return 0 or the return value
 
     def __eval_class(self, node):
         self.__push_env()
@@ -306,7 +309,7 @@ class Interpreter:
             instance_location = self.__eval(node.children[0])
             instance_name = node.children[0].value
             class_instance = instance_location.variable_map[instance_name]
-            if isinstance(class_instance, self.Environment): # if the instance is a class env then return
+            if isinstance(class_instance, self.Environment):  # if the instance is a class env then return
                 return class_instance
             class_env = class_instance.environment
             return class_env
@@ -317,7 +320,6 @@ class Interpreter:
 
         # return
         # pass
-
 
     def __eval_member(self, node):
         class_instance = self.__eval(node.children[0])  # eval class lookup
@@ -331,7 +333,6 @@ class Interpreter:
             value.isMethod = True
             value.parentInstance = class_instance
         return value
-
 
     def __eval_varloc(self, node):
         variable_name = node.value
@@ -421,9 +422,8 @@ class Interpreter:
         return False
 
     def __eval_not(self, node):
-        not_expression = not(self.__eval(node.children[0]))
+        not_expression = not (self.__eval(node.children[0]))
         return not_expression
-
 
     def __eval_less_than(self, node):
         lhs = self.__eval(node.children[0])
@@ -466,5 +466,3 @@ class Interpreter:
         if lhs or rhs:
             return True
         return False
-
-

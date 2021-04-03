@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-from parser import Parser # FIXME change this line to use your code if necessary
-from interpreter import  Interpreter
+from langParser import Parser # FIXME change this line to use your code if necessary
+from interpreter import InterpreterService
 
 
 
