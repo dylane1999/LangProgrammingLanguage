@@ -1,5 +1,166 @@
-from interpreter import Interpreter
+
+from interpreter import InterpreterService
 import sys
+from math import copysign
+from copy import deepcopy
+
+
+class ConstantFoldingTransform:
+    def __init__(self):
+        self.interpreter = InterpreterService()
+        self.sign = lambda x: copysign(1, x)
+
+    def visit(self, node):
+        '''
+        tries to access node.children, if fail return the node, meaning it has no children and is an integer
+        :param node: statement parse or int
+        :return: node
+        '''
+        try:
+            node.children = [
+                self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
+                for child in node.children
+            ]
+            return self.transform(node)
+        except AttributeError as error:
+            print(error)
+            return node
+
+    def transform(self, node):
+        untouched_node = deepcopy(node)
+        if node.type in '+-':
+            child_one = self.expand(node.children[0], "+")
+            child_two = self.expand(node.children[1], node.type)
+            if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
+                simple_add = self.interpreter.transform_eval(node)
+                return IntergerParse(simple_add, 0)
+            if isinstance(child_two, list) and isinstance(child_one, IntergerParse):
+                new_statement = self.case_one(child_one, child_two)
+                if new_statement is not None:
+                    return new_statement
+            if isinstance(child_one, list) and isinstance(child_two, IntergerParse):
+                new_statement = self.case_two(child_one, child_two)
+                if new_statement is not None:
+                    return new_statement
+            return untouched_node  # FIXME
+        elif node.type in '*/':
+            child_one = node.children[0]
+            child_two = node.children[1]
+            if child_two.value == 0:  # if divide by zero don't change
+                return node
+            if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
+                result_mult_div = self.interpreter.transform_eval(node)
+                return IntergerParse(result_mult_div, 0)
+            return node  # FIXME
+        else:
+            return untouched_node
+
+
+    def case_one(self, child_one, child_two):
+        remaining_children = []
+        result_sum = child_one.value
+        for child in child_two:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+        # remaining_children.append(result)
+        result_sum = IntergerParse(result_sum, 0)
+        if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
+            # if the lookup is negative and the number is positive
+            new_statement = StatementParse(0, "-")
+            remaining_children[0] = self.flip_sign(remaining_children[0])
+            new_statement.children.append(result_sum)
+            new_statement.children.append(remaining_children[0])
+            return new_statement
+        return None
+
+    def case_two(self, child_one, child_two):
+        remaining_children = []
+        result_sum = child_two.value
+        for child in child_one:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+        # remaining_children.append(result)
+        result_sum = IntergerParse(result_sum, 0)
+        if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
+            # if the lookup is negative and the number is positive
+            new_statement = StatementParse(0, "-")
+            remaining_children[0] = self.flip_sign(remaining_children[0])
+            new_statement.children.append(result_sum)
+            new_statement.children.append(remaining_children[0])
+            return new_statement
+        return None
+
+
+    def expand(self, node, sign):
+        all_children = []
+        if hasattr(node, "children") and node.type == "-":
+            node.children[1] = self.flip_sign( node.children[1])
+        if hasattr(node, "children") and len(node.children) != 0 and node.type in '+-':
+            for child in node.children:
+                if sign == "-":
+                    child = self.flip_sign(child)
+                    #all chidlren = all chidlren retiurn val
+                if child.type in "+-":
+                    all_children += self.expand(child, sign)  # could require fixme - the sign of the flipped children
+                    continue
+                all_children.append(child)
+            return all_children
+        return node
+
+    def flip_sign(self, node):
+        if node.type in '*/':
+            node = self.flip_mult_div_sign(node)
+            return node
+        if isinstance(node, IntergerParse):
+            node.value = node.value * -1
+            return node
+        if node.value[0] == "-":
+            node.value = node.value[1:]
+            node.sign = "+"
+            return node
+        node.value = "-" + node.value
+        node.sign = "-"
+        return node
+
+    def set_undefined_sign(self, node):
+        node.sign = "undefined"
+        return node
+
+    def flip_mult_div_sign(self, node):
+        if hasattr(node, "sign"):
+            if node.sign == "-":
+                node.sign = "+"
+            else:
+                node.sign = "-"
+            return node
+        else:
+            node.sign = "-"
+            return node
+
+
+    def is_positive(self, node):
+        '''
+        returns True for positive sign, False for negative sign
+        :param node:
+        :return: True(+) or False(-)
+        '''
+        if node.type in "*/":
+            if hasattr(node, "sign"):
+                if node.sign == "-":
+                    return False
+                else: return True
+            else: return True
+        if isinstance(node, IntergerParse):
+            return self.sign(node.value)
+        if node.value[0] == "-":
+            return False
+        return True
+
+
 
 
 class Parse:
@@ -1315,180 +1476,24 @@ class Parser:
 
     def test(self):
         parser = Parser()
-        interpreter = Interpreter()
+        interpreter = InterpreterService()
+        transformer = ConstantFoldingTransform()
 
-        # term = parser.parse("var x = 0; x = x + 5*44; print x;", "program")  # 6
-        # term = parser.parse("var printer = func(){ print 1; }; ", "program")  # 6
-        # var
-        # foo =
-        # this is for identifier  consts.ee();
-        # var car.boot = consts.ee();
+
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-        
-var
-BinarySearchTree =
+# 1+2*b;
+#  2-(i-1)+56; parses i-1 incorrect
+  2-(i * 1)+56-(5*b)+11; 
 
-
-class {
-var Node =
-
-
-class {
-var value = 0;
-var left = 0;
-var right = 0;
-var constructor = func(this, value) {
-this.value = value;
-ret this;
-};
-};
-
-
-var
-root = 0;
-var
-debug_start = 0;
-var
-constructor = func(this)
-{
-    ret
-this;
-};
-
-var
-test = func(this, value)
-{
-    root = test_recur(root, value);
-};
-
-var
-test_recur = func(this, node, value)
-{
-    print
-value;
-print
-node;
-};
-var
-add = func(this, value)
-{
-    # print root;
-    root = recur_add(root, value);
-
-};
-
-var
-print_nodes = func(this, node)
-{
-if (node != 0)
-{
-    print
-node.value;
-print
-node.left;
-print
-node.right;
-print
-9999999;
-if (node.left != node & & node.left != 0)
-{
-    this.print_nodes(node.left);
-}
-if (node.right != node & & node.right != 0) {
-this.print_nodes(node.right);
-}
-}
-else {
-print 111111111;
-}
-};
-
-var
-recur_add = func(this, node, value)
-{
-    # if (node == 0){
-    # debug_start = 0;}
-    # else{
-    # debug_start = node.value == 9;
-    # }
-
-    this.print_nodes(node);
-if (node != 0)
-{
-    # print node.value;
-}
-if (node == 0)
-{
-    # print 11;
-    ret
-Node().constructor(value);
-}
-if (value <= node.value) {
-var temp = this.recur_add(node.left, value);
-this.print_nodes(temp);
-node.left = temp;  # fixme
-this.print_nodes(temp);
-this.print_nodes(node.left);
-this.print_nodes(node);
-ret node;
-}
-if (value > node.value) {
-# print 31;
-node.right = recur_add(node.right, value);
-ret node;
-}
-};
-var
-in_order_print = func(this)
-{
-    recur_in_order_print(root);
-};
-var
-recur_in_order_print = func(this, node)
-{
-if (node != 0)
-{
-    recur_in_order_print(node.left);
-print
-node.value;
-recur_in_order_print(node.right);
-}
-};
-};
-var tree = BinarySearchTree().constructor();
-tree.add(9);
-tree.print_nodes(tree.root);
-# <class 'dict'>: {'value': 9, 'left': 0, 'right': 0, 'constructor': <interpreter.Interpreter.Closure object at 0x10bcc55d0>} correct
-print
-2222222;
-# prob occurs here, it adds an infinite number of left nodes... it will have Root with a value 7, w/ many left children all duplicates
-tree.add(7);
-tree.print_nodes(tree.root);
-# print 2222222;
-# tree.add(6);
-# print 333333333;
-
-# prob occurs when a second left/right is added
-
-
-
-
-
-
-        
-
-''')  # test for function insdie of a dunction
-        # term = parser.parse("var a = 1; var outer = func(){ var inner = func(){print a;}; ret inner; };  var foo = outer(); a =3; foo(); ", "program")  # test for function insdie of a dunction
-
-        # term = parser.parse("var a = 1; var outer = func(){ var a = 2; print a; }; outer(); ", "program")  # test for function insdie of a dunction
+''')
 
         print(term.__str__())
-        x = interpreter.execute(term)
-        #  ret inner;
-#
 
-#  var a = 1; var outer = func(){ var a = 2; var inner = func(){ print a;}; ret inner ; };
+        y = transformer.visit(term)
+        print(y)
+        # x = interpreter.execute(term)
+
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
     assert actual is not None, 'Got None when parsing "{}"'.format(string)
