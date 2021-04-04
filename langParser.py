@@ -47,8 +47,8 @@ class ConstantFoldingTransform:
         elif node.type in '*/':
             child_one = node.children[0]
             child_two = node.children[1]
-            if child_two.value == 0:  # if divide by zero don't change
-                return node
+            if child_two.value == 0 and node.type == "/":  # if divide by zero don't change
+                return untouched_node
             if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
                 result_mult_div = self.interpreter.transform_eval(node)
                 return IntergerParse(result_mult_div, 0)
@@ -1551,7 +1551,19 @@ class Parser:
 #   2-i-2; 
     # 1-1-i; 
 # 2-(i-1)+(b*31);
+
+print 24 / 3 / 2 / 1 / (24 * 0);
+
+
 ''')
+
+        '''
+        (sequence
+    (print (/ 24 0))
+    (print (/ 4 0))
+    (print (/ 4 0))
+    (print (/ 4 0))
+    (print (/ (/ (/ (/ 24 0) 1) 2) 3)))'''
 
         print(term.__str__())
 
