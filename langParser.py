@@ -51,7 +51,7 @@ class ConstantFoldingTransform:
             if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
                 result_mult_div = self.interpreter.transform_eval(node)
                 return IntergerParse(result_mult_div, 0)
-            return node  # FIXME
+            return untouched_node  # FIXME
         else:
             return untouched_node
 
@@ -69,10 +69,39 @@ class ConstantFoldingTransform:
         if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
             # if the lookup is negative and the number is positive
             new_statement = StatementParse(0, "-")
-            remaining_children[0] = self.flip_sign(remaining_children[0])
+            new_statement.children.append(result_sum)
+            new_statement.children.append(self.flip_sign(remaining_children[0]))
+            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+            parent = new_statement
+            for child in remaining_children:
+                sign = self.get_sign(child)
+                flipped_child = child
+                if not self.is_positive(child):
+                    flipped_child = self.flip_sign(child)
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                new_statement.children.append(flipped_child)
+                parent = new_statement
+            # new_statement.children.append(remaining_children[0])
+            return parent
+        if self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
+            # if the lookup is negative and the number is positive
+            new_statement = StatementParse(0, "+")
             new_statement.children.append(result_sum)
             new_statement.children.append(remaining_children[0])
-            return new_statement
+            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+            parent = new_statement
+            for child in remaining_children:
+                sign = self.get_sign(child)
+                flipped_child = child
+                if not self.is_positive(child):
+                    flipped_child = self.flip_sign(child)
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                new_statement.children.append(flipped_child)
+                parent = new_statement
+            # new_statement.children.append(remaining_children[0])
+            return parent
         return None
 
     def case_two(self, child_one, child_two):
@@ -88,10 +117,39 @@ class ConstantFoldingTransform:
         if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
             # if the lookup is negative and the number is positive
             new_statement = StatementParse(0, "-")
-            remaining_children[0] = self.flip_sign(remaining_children[0])
+            new_statement.children.append(result_sum)
+            new_statement.children.append(self.flip_sign(remaining_children[0]))
+            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+            parent = new_statement
+            for child in remaining_children:
+                sign = self.get_sign(child)
+                flipped_child = child
+                if not self.is_positive(child):
+                    flipped_child = self.flip_sign(child)
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                new_statement.children.append(flipped_child)
+                parent = new_statement
+            # new_statement.children.append(remaining_children[0])
+            return parent
+        if self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
+            # if the lookup is negative and the number is positive
+            new_statement = StatementParse(0, "+")
             new_statement.children.append(result_sum)
             new_statement.children.append(remaining_children[0])
-            return new_statement
+            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+            parent = new_statement
+            for child in remaining_children:
+                sign = self.get_sign(child)
+                flipped_child = child
+                if not self.is_positive(child):
+                    flipped_child = self.flip_sign(child)
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                new_statement.children.append(flipped_child)
+                parent = new_statement
+            # new_statement.children.append(remaining_children[0])
+            return parent
         return None
 
 
@@ -109,6 +167,8 @@ class ConstantFoldingTransform:
                     continue
                 all_children.append(child)
             return all_children
+        if sign == "-":
+            return self.flip_sign(node)
         return node
 
     def flip_sign(self, node):
@@ -126,9 +186,12 @@ class ConstantFoldingTransform:
         node.sign = "-"
         return node
 
-    def set_undefined_sign(self, node):
-        node.sign = "undefined"
-        return node
+    def get_sign(self, node):
+        is_positive = self.is_positive(node)
+        if is_positive:
+            return "+"
+        return "-"
+
 
     def flip_mult_div_sign(self, node):
         if hasattr(node, "sign"):
@@ -800,8 +863,8 @@ class Parser:
 
     def __parse_identifier_char(self, string, index):
         parsed = ""
-        while index < len(string) and (string[index].isalnum() or string[index] == "-" or string[
-            index] == "_"):  # loops and adds to parsed while still alphanumeric
+        while index < len(string) and (string[index].isalnum() or string[index] == "_"):  # loops and adds to parsed while still alphanumeric
+            # or string[index] == "-"
             parsed += string[index]
             index += 1
         return Parse(parsed, index)
@@ -1484,8 +1547,8 @@ class Parser:
         term = parser.parse('''
 # 1+2*b;
 #  2-(i-1)+56; parses i-1 incorrect
-  2-(i * 1)+56-(5*b)+11; 
-
+#   2-i-2; 
+2+(i-1)+(b*31);
 ''')
 
         print(term.__str__())
