@@ -32,7 +32,8 @@ class ConstantFoldingTransform:
             child_one = self.expand(node.children[0], "+")
             child_two = self.expand(node.children[1], node.type)
             if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
-                simple_add = self.interpreter.transform_eval(node)
+                simple_add = child_one.value + child_two.value
+                # simple_add = self.interpreter.transform_eval(node) old code
                 return IntergerParse(simple_add, 0)
             if isinstance(child_two, list) and isinstance(child_one, IntergerParse):
                 new_statement = self.case_one(child_one, child_two)
@@ -1548,7 +1549,8 @@ class Parser:
 # 1+2*b;
 #  2-(i-1)+56; parses i-1 incorrect
 #   2-i-2; 
-2+(i-1)+(b*31);
+    # 1-1-i; 
+# 2-(i-1)+(b*31);
 ''')
 
         print(term.__str__())
