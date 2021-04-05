@@ -1,4 +1,3 @@
-
 from interpreter import InterpreterService
 import sys
 from math import copysign
@@ -8,6 +7,7 @@ from copy import deepcopy
 class ConstantFoldingTransform:
     def __init__(self):
         self.interpreter = InterpreterService()
+        self.parser = Parser()
         self.sign = lambda x: copysign(1, x)
 
     def visit(self, node):
@@ -26,6 +26,8 @@ class ConstantFoldingTransform:
             print(error)
             return node
 
+    # make a case 3 that will go for list and list
+
     def transform(self, node):
         untouched_node = deepcopy(node)
         if node.type in '+-':
@@ -34,6 +36,11 @@ class ConstantFoldingTransform:
             if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
                 simple_add = child_one.value + child_two.value
                 # simple_add = self.interpreter.transform_eval(node) old code
+                if simple_add < 0:
+                    new_statement = StatementParse(0, "-")
+                    new_statement.children.append(IntergerParse(0, 0))
+                    new_statement.children.append(IntergerParse(simple_add * -1, 0))
+                    return new_statement
                 return IntergerParse(simple_add, 0)
             if isinstance(child_two, list) and isinstance(child_one, IntergerParse):
                 new_statement = self.case_one(child_one, child_two)
@@ -41,6 +48,10 @@ class ConstantFoldingTransform:
                     return new_statement
             if isinstance(child_one, list) and isinstance(child_two, IntergerParse):
                 new_statement = self.case_two(child_one, child_two)
+                if new_statement is not None:
+                    return new_statement
+            if isinstance(child_one, list) and isinstance(child_two, list):
+                new_statement = self.case_three(child_one, child_two)
                 if new_statement is not None:
                     return new_statement
             return untouched_node  # FIXME
@@ -56,7 +67,6 @@ class ConstantFoldingTransform:
         else:
             return untouched_node
 
-
     def case_one(self, child_one, child_two):
         remaining_children = []
         result_sum = child_one.value
@@ -65,45 +75,8 @@ class ConstantFoldingTransform:
                 result_sum += child.value
             else:
                 remaining_children.append(child)
-        # remaining_children.append(result)
-        result_sum = IntergerParse(result_sum, 0)
-        if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
-            # if the lookup is negative and the number is positive
-            new_statement = StatementParse(0, "-")
-            new_statement.children.append(result_sum)
-            new_statement.children.append(self.flip_sign(remaining_children[0]))
-            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
-            parent = new_statement
-            for child in remaining_children:
-                sign = self.get_sign(child)
-                flipped_child = child
-                if not self.is_positive(child):
-                    flipped_child = self.flip_sign(child)
-                new_statement = StatementParse(0, sign)
-                new_statement.children.append(parent)
-                new_statement.children.append(flipped_child)
-                parent = new_statement
-            # new_statement.children.append(remaining_children[0])
-            return parent
-        if self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
-            # if the lookup is negative and the number is positive
-            new_statement = StatementParse(0, "+")
-            new_statement.children.append(result_sum)
-            new_statement.children.append(remaining_children[0])
-            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
-            parent = new_statement
-            for child in remaining_children:
-                sign = self.get_sign(child)
-                flipped_child = child
-                if not self.is_positive(child):
-                    flipped_child = self.flip_sign(child)
-                new_statement = StatementParse(0, sign)
-                new_statement.children.append(parent)
-                new_statement.children.append(flipped_child)
-                parent = new_statement
-            # new_statement.children.append(remaining_children[0])
-            return parent
-        return None
+        x = self.get_new_parse_treeV2(result_sum, remaining_children)
+        return x
 
     def case_two(self, child_one, child_two):
         remaining_children = []
@@ -113,56 +86,180 @@ class ConstantFoldingTransform:
                 result_sum += child.value
             else:
                 remaining_children.append(child)
+        x = self.get_new_parse_treeV2(result_sum, remaining_children)
+        return x
         # remaining_children.append(result)
+
+    def get_new_parse_tree(self, result_sum, remaining_children):
         result_sum = IntergerParse(result_sum, 0)
-        if not self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
-            # if the lookup is negative and the number is positive
-            new_statement = StatementParse(0, "-")
-            new_statement.children.append(result_sum)
-            new_statement.children.append(self.flip_sign(remaining_children[0]))
-            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
-            parent = new_statement
-            for child in remaining_children:
-                sign = self.get_sign(child)
-                flipped_child = child
-                if not self.is_positive(child):
-                    flipped_child = self.flip_sign(child)
+        if result_sum.value != 0:
+            remaining_children.append(result_sum)  # add the sum as the last child
+        if not self.is_positive(remaining_children[0]):  # re-arange a postive value to be fist if there is not already
+            first_positive = self.find_first_positive(remaining_children)
+            remaining_children.remove(first_positive)  # remove the first positive
+            remaining_children.insert(0, first_positive)  # and add it in back in at the front
+        # now create the new IR representation
+        sign = self.get_sign(remaining_children[1])  # get the sign of the next element
+        new_statement = StatementParse(0, sign)
+        new_statement.children.append(remaining_children[0])
+        remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+        parent = new_statement
+        counter = 0
+        for child in remaining_children:
+            sign = self.get_sign(child)
+            flipped_child = child
+            if not self.is_positive(child):
+                flipped_child = self.flip_sign(child)
+            if len(parent.children) <= 1:
+                parent.children.append(flipped_child)
+            else:
                 new_statement = StatementParse(0, sign)
                 new_statement.children.append(parent)
-                new_statement.children.append(flipped_child)
+                if counter + 1 >= len(remaining_children):
+                    new_statement.children.append(flipped_child)
                 parent = new_statement
-            # new_statement.children.append(remaining_children[0])
-            return parent
-        if self.is_positive(remaining_children[0]) and self.is_positive(result_sum):
-            # if the lookup is negative and the number is positive
-            new_statement = StatementParse(0, "+")
-            new_statement.children.append(result_sum)
-            new_statement.children.append(remaining_children[0])
-            remaining_children.pop(0)  # remove the elemnt at 0 that was just added
-            parent = new_statement
-            for child in remaining_children:
-                sign = self.get_sign(child)
-                flipped_child = child
-                if not self.is_positive(child):
-                    flipped_child = self.flip_sign(child)
-                new_statement = StatementParse(0, sign)
-                new_statement.children.append(parent)
-                new_statement.children.append(flipped_child)
-                parent = new_statement
-            # new_statement.children.append(remaining_children[0])
-            return parent
+            counter += 1
+        return parent
+
+    def get_new_parse_treeV2(self, result_sum, remaining_children):
+        if len(remaining_children) == 0:
+            if result_sum < 0:
+                new_statement = StatementParse(0, "-")
+                new_statement.children.append(IntergerParse(0, 0))
+                new_statement.children.append(IntergerParse(result_sum * -1, 0))
+                return new_statement
+            return result_sum
+        result_sum = IntergerParse(result_sum, 0)
+        if result_sum.value != 0:
+            remaining_children.append(result_sum)  # add the sum as the last child
+        if not self.is_positive(remaining_children[0]):  # re-arange a postive value to be fist if there is not already
+            first_positive = self.find_first_positive(remaining_children)
+            if first_positive is not None:
+                remaining_children.remove(first_positive)  # remove the first positive
+                remaining_children.insert(0, first_positive)  # and add it in back in at the front
+            else: remaining_children.insert(0, IntergerParse(0,0))
+        # now create the new IR representation
+        result_string = ""
+        result_string += str(remaining_children[0].value)
+        remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+        for child in remaining_children:
+            if self.is_positive(child):
+                result_string += " + " + str(child.value)
+            else:
+                child = self.flip_sign(child)
+                result_string += " - " + str(child.value)
+        result_string += ";"
+        new_ir_tree = self.parser.parse(result_string)
+        return new_ir_tree.children[0]
+
+    def case_three(self, child_one, child_two):
+        remaining_children = []
+        result_sum = 0
+        for child in child_one:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+        for child in child_two:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+        x = self.get_new_parse_treeV2(result_sum, remaining_children)
+        return x
+
+        # for i in range(len(remaining_children) -1):
+        #     if i+1 >= len(remaining_children):
+        #         parent.children.append(remaining_children[i])
+        #     signx = self.get_sign(remaining_children[i + 1])
+        #     sign = self.get_sign(remaining_children[i+1])
+        #     new_statement = StatementParse(0, sign)
+        #     flipped_child = child
+        #     if not self.is_positive(remaining_children[i]):
+        #         remaining_children[i] = self.flip_sign(remaining_children[i])
+        #
+        #     if not self.is_positive(remaining_children[i+1]):
+        #         remaining_children[i+1] = self.flip_sign(remaining_children[i+1])
+        #
+        #     new_statement.children.append(remaining_children[i])
+        #     new_statement.children.append(remaining_children[i+1])
+        #     new_statement.children.append(flipped_child)
+        #     another_new = StatementParse(0, signx)
+        #     another_new.children.append(parent)
+        #     another_new.children.append(new_statement)
+        #     parent = new_statement
+        # return parent
+
+        # for child in remaining_children:
+        #     sign = self.get_sign(child)
+        #     flipped_child = child
+        #     if not self.is_positive(child):
+        #         flipped_child = self.flip_sign(child)
+        #     if len(parent.children) <= 1:
+        #         parent.children.append(flipped_child)
+        #     else:
+        #         new_statement = StatementParse(0, sign)
+        #         new_statement.children.append(parent)
+        #         if counter+1 >= len(remaining_children):
+        #             new_statement.children.append(flipped_child)
+        #         parent = new_statement
+        #     counter += 1
+        # return parent
+
+    def find_first_positive(self, list_of_children):
+        for child in list_of_children:
+            if self.is_positive(child):
+                return child
         return None
 
+    def recursive_solution(self, child_one, child_two):
+        remaining_children = []
+        result_sum = child_two.value
+        for child in child_one:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+        # remaining_children.append(result)
+        result_sum = IntergerParse(result_sum, 0)
+        if result_sum.value != 0:
+            remaining_children.append(result_sum)  # add the sum as the last child
+        if not self.is_positive(remaining_children[0]):  # re-arange a postive value to be fist if there is not already
+            first_positive = self.find_first_positive(remaining_children)
+            remaining_children.remove(first_positive)  # remove the first positive
+            remaining_children.insert(0, first_positive)  # and add it in back in at the front
+        # now create the new IR representation
+        sign = self.get_sign(remaining_children[1])  # get the sign of the next element
+        new_statement = StatementParse(0, sign)
+        new_statement.children.append(remaining_children[0])
+        remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+        parent = new_statement
+        counter = 0
+        for child in remaining_children:
+            sign = self.get_sign(child)
+            flipped_child = child
+            if not self.is_positive(child):
+                flipped_child = self.flip_sign(child)
+            if len(parent.children) <= 1:
+                parent.children.append(flipped_child)
+            else:
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                if counter + 1 >= len(remaining_children):
+                    new_statement.children.append(flipped_child)
+                parent = new_statement
+            counter += 1
+        return parent
 
     def expand(self, node, sign):
         all_children = []
         if hasattr(node, "children") and node.type == "-":
-            node.children[1] = self.flip_sign( node.children[1])
+            node.children[1] = self.flip_sign(node.children[1])
         if hasattr(node, "children") and len(node.children) != 0 and node.type in '+-':
             for child in node.children:
                 if sign == "-":
                     child = self.flip_sign(child)
-                    #all chidlren = all chidlren retiurn val
+                    # all chidlren = all chidlren retiurn val
                 if child.type in "+-":
                     all_children += self.expand(child, sign)  # could require fixme - the sign of the flipped children
                     continue
@@ -193,7 +290,6 @@ class ConstantFoldingTransform:
             return "+"
         return "-"
 
-
     def flip_mult_div_sign(self, node):
         if hasattr(node, "sign"):
             if node.sign == "-":
@@ -205,7 +301,6 @@ class ConstantFoldingTransform:
             node.sign = "-"
             return node
 
-
     def is_positive(self, node):
         '''
         returns True for positive sign, False for negative sign
@@ -216,15 +311,18 @@ class ConstantFoldingTransform:
             if hasattr(node, "sign"):
                 if node.sign == "-":
                     return False
-                else: return True
-            else: return True
+                else:
+                    return True
+            else:
+                return True
         if isinstance(node, IntergerParse):
-            return self.sign(node.value)
+            if node.value < 0:
+                return False
+            else:
+                return True
         if node.value[0] == "-":
             return False
         return True
-
-
 
 
 class Parse:
@@ -280,6 +378,7 @@ class CallExpression(StatementParse):
         super().__init__(index, type)
         # self.children = []
         self.func_name = func_name
+
 
 class MemberCallExpression(StatementParse):
 
@@ -349,6 +448,7 @@ class ParametersParse(IdentifierParse):  # should have a type of varloc  (declar
         result = self.value
         return result
 
+
 class MemberLocationParse(IdentifierParse):  # should have a type of memloc
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
@@ -363,6 +463,7 @@ class MemberLocationParse(IdentifierParse):  # should have a type of memloc
         expression_result += ")"
         return expression_result
 
+
 class MemberParse(IdentifierParse):  # should have a type of varloc  (declare)
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
@@ -370,9 +471,6 @@ class MemberParse(IdentifierParse):  # should have a type of varloc  (declare)
     def __str__(self):
         result = self.value
         return result
-
-
-
 
 
 class ProgramParse():
@@ -696,7 +794,8 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse spaces before operand and add to index
             if op_space != self.FAIL:
                 index = op_space.index
-            right_parse = self.__parse(string, index, "call_member_expression")  # parse next operand; index +1 for "* | /"
+            right_parse = self.__parse(string, index,
+                                       "call_member_expression")  # parse next operand; index +1 for "* | /"
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
@@ -864,7 +963,8 @@ class Parser:
 
     def __parse_identifier_char(self, string, index):
         parsed = ""
-        while index < len(string) and (string[index].isalnum() or string[index] == "_"):  # loops and adds to parsed while still alphanumeric
+        while index < len(string) and (
+                string[index].isalnum() or string[index] == "_"):  # loops and adds to parsed while still alphanumeric
             # or string[index] == "-"
             parsed += string[index]
             index += 1
@@ -886,7 +986,7 @@ class Parser:
         return IdentifierParse(parsed, index, "lookup")  # parse all identifers initially as a lookup
 
     def __parse_location(self, string, index):
-        isMember = False #init member as false initialy
+        isMember = False  # init member as false initialy
         parse_identifier = self.__parse(string, index, "identifier")
         if parse_identifier == self.FAIL:
             return self.FAIL
@@ -923,9 +1023,10 @@ class Parser:
         if self.__check_forbidden_names(location_parse.value):  # pass var name as arg
             return self.FAIL
         var_location = AssignLocationParse(location_parse.value, location_parse.index, "varloc")
-        if location_parse.type == "memloc": # override varloc with the child of memloc if type memloc
-            var_location = MemberLocationParse(location_parse.value, location_parse. index, "memloc")
-            var_location.children.append(AssignLocationParse(location_parse.children[0].value, location_parse.index, "varloc"))
+        if location_parse.type == "memloc":  # override varloc with the child of memloc if type memloc
+            var_location = MemberLocationParse(location_parse.value, location_parse.index, "memloc")
+            var_location.children.append(
+                AssignLocationParse(location_parse.children[0].value, location_parse.index, "varloc"))
             var_location.children.append(location_parse.value)
         index = var_location.index  # add var_location index
         op_space = self.__parse(string, index, "op_space")
@@ -1537,12 +1638,10 @@ class Parser:
 
     # (print(member(lookup consts) pi))
 
-
     def test(self):
         parser = Parser()
         interpreter = InterpreterService()
         transformer = ConstantFoldingTransform()
-
 
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
@@ -1552,24 +1651,187 @@ class Parser:
     # 1-1-i; 
 # 2-(i-1)+(b*31);
 
-print 24 / 3 / 2 / 1 / (24 * 0);
+# print 24 / 3 / 2 / 1 / (24 * 0);
+# print (1 + 2) + (c - 8); # 59
+# print (1 + 2) - (4 + d); # -129
+
+# print (1 + 2) + (4 - d); # -121
+# print (1 + 2) + (4 - 8); # -1
+# print (1 + 2) + (4 + d); # 135
+ # print (1 + b) + (c + d); # 225
+# print (a + 2) + (4 + 8); # 30
+# print (a + 2) + (4 + d); # 150
+# print (a + 2) + (c + 8); # 90
+# print (a + 2) + (c + d); # 210
+# print (a + b) + (4 + 8); # 60
+# print (a + b) + (4 + d); # 180
+# print (a + b) + (c + 8); # 120
+# print (a + b) + (c + d); # 240
+# print (1 + 2) + (4 - 8); # -1
+
+
+
+var a = 16;
+var b = 32;
+var c = 64;
+var d = 128;
+print (1 + 2) + (4 + 8); # 15
+print (1 + 2) + (4 + d); # 135
+print (1 + 2) + (c + 8); # 75
+print (1 + 2) + (c + d); # 195
+print (1 + b) + (4 + 8); # 45
+print (1 + b) + (4 + d); # 165
+print (1 + b) + (c + 8); # 105
+print (1 + b) + (c + d); # 225
+print (a + 2) + (4 + 8); # 30
+print (a + 2) + (4 + d); # 150
+print (a + 2) + (c + 8); # 90
+print (a + 2) + (c + d); # 210
+print (a + b) + (4 + 8); # 60
+print (a + b) + (4 + d); # 180
+print (a + b) + (c + 8); # 120
+print (a + b) + (c + d); # 240
+print (1 + 2) + (4 - 8); # -1
+print (1 + 2) + (4 - d); # -121
+print (1 + 2) + (c - 8); # 59
+print (1 + 2) + (c - d); # -61
+print (1 + b) + (4 - 8); # 29
+print (1 + b) + (4 - d); # -91
+print (1 + b) + (c - 8); # 89
+print (1 + b) + (c - d); # -31
+print (a + 2) + (4 - 8); # 14
+print (a + 2) + (4 - d); # -106
+print (a + 2) + (c - 8); # 74
+print (a + 2) + (c - d); # -46
+print (a + b) + (4 - 8); # 44
+print (a + b) + (4 - d); # -76
+print (a + b) + (c - 8); # 104
+print (a + b) + (c - d); # -16
+print (1 + 2) - (4 + 8); # -9
+print (1 + 2) - (4 + d); # -129
+print (1 + 2) - (c + 8); # -69
+print (1 + 2) - (c + d); # -189
+print (1 + b) - (4 + 8); # 21
+print (1 + b) - (4 + d); # -99
+print (1 + b) - (c + 8); # -39
+print (1 + b) - (c + d); # -159
+print (a + 2) - (4 + 8); # 6
+print (a + 2) - (4 + d); # -114
+print (a + 2) - (c + 8); # -54
+print (a + 2) - (c + d); # -174
+print (a + b) - (4 + 8); # 36
+print (a + b) - (4 + d); # -84
+print (a + b) - (c + 8); # -24
+print (a + b) - (c + d); # -144
+print (1 + 2) - (4 - 8); # 7
+print (1 + 2) - (4 - d); # 127
+print (1 + 2) - (c - 8); # -53
+print (1 + 2) - (c - d); # 67
+print (1 + b) - (4 - 8); # 37
+print (1 + b) - (4 - d); # 157
+print (1 + b) - (c - 8); # -23
+print (1 + b) - (c - d); # 97
+print (a + 2) - (4 - 8); # 22
+print (a + 2) - (4 - d); # 142
+print (a + 2) - (c - 8); # -38
+print (a + 2) - (c - d); # 82
+print (a + b) - (4 - 8); # 52
+print (a + b) - (4 - d); # 172
+print (a + b) - (c - 8); # -8
+print (a + b) - (c - d); # 112
+print (1 - 2) + (4 + 8); # 11
+print (1 - 2) + (4 + d); # 131
+print (1 - 2) + (c + 8); # 71
+print (1 - 2) + (c + d); # 191
+print (1 - b) + (4 + 8); # -19
+print (1 - b) + (4 + d); # 101
+print (1 - b) + (c + 8); # 41
+print (1 - b) + (c + d); # 161
+print (a - 2) + (4 + 8); # 26
+print (a - 2) + (4 + d); # 146
+print (a - 2) + (c + 8); # 86
+print (a - 2) + (c + d); # 206
+print (a - b) + (4 + 8); # -4
+print (a - b) + (4 + d); # 116
+print (a - b) + (c + 8); # 56
+print (a - b) + (c + d); # 176
+print (1 - 2) + (4 - 8); # -5
+print (1 - 2) + (4 - d); # -125
+print (1 - 2) + (c - 8); # 55
+print (1 - 2) + (c - d); # -65
+print (1 - b) + (4 - 8); # -35
+print (1 - b) + (4 - d); # -155
+print (1 - b) + (c - 8); # 25
+print (1 - b) + (c - d); # -95
+print (a - 2) + (4 - 8); # 10
+print (a - 2) + (4 - d); # -110
+print (a - 2) + (c - 8); # 70
+print (a - 2) + (c - d); # -50
+print (a - b) + (4 - 8); # -20
+print (a - b) + (4 - d); # -140
+print (a - b) + (c - 8); # 40
+print (a - b) + (c - d); # -80
+print (1 - 2) - (4 + 8); # -13
+print (1 - 2) - (4 + d); # -133
+print (1 - 2) - (c + 8); # -73
+print (1 - 2) - (c + d); # -193
+print (1 - b) - (4 + 8); # -43
+print (1 - b) - (4 + d); # -163
+print (1 - b) - (c + 8); # -103
+print (1 - b) - (c + d); # -223
+print (a - 2) - (4 + 8); # 2
+print (a - 2) - (4 + d); # -118
+print (a - 2) - (c + 8); # -58
+print (a - 2) - (c + d); # -178
+print (a - b) - (4 + 8); # -28
+print (a - b) - (4 + d); # -148
+print (a - b) - (c + 8); # -88
+print (a - b) - (c + d); # -208
+print (1 - 2) - (4 - 8); # 3
+print (1 - 2) - (4 - d); # 123
+print (1 - 2) - (c - 8); # -57
+print (1 - 2) - (c - d); # 63
+print (1 - b) - (4 - 8); # -27
+print (1 - b) - (4 - d); # 93
+print (1 - b) - (c - 8); # -87
+print (1 - b) - (c - d); # 33
+print (a - 2) - (4 - 8); # 18
+print (a - 2) - (4 - d); # 138
+print (a - 2) - (c - 8); # -42
+print (a - 2) - (c - d); # 78
+print (a - b) - (4 - 8); # -12
+print (a - b) - (4 - d); # 108
+print (a - b) - (c - 8); # -72
+print (a - b) - (c - d); # 48
+
 
 
 ''')
 
-        '''
-        (sequence
-    (print (/ 24 0))
-    (print (/ 4 0))
-    (print (/ 4 0))
-    (print (/ 4 0))
-    (print (/ (/ (/ (/ 24 0) 1) 2) 3)))'''
+        '''(sequence
+        
+        (print (- (- 0 (lookup d)) 1))
+
+    (print (+ (+ (+ (lookup b) (lookup c)) (lookup d)) 1))
+    (print (+ (lookup a) 14))
+    (print (+ (+ (lookup a) (lookup d)) 6))
+    (print (+ (+ (lookup a) (lookup c)) 10))
+    (print (+ (+ (+ (lookup a) (lookup c)) (lookup d)) 2))
+    (print (+ (+ (lookup a) (lookup b)) 12))
+    (print (+ (+ (+ (lookup a) (lookup b)) (lookup d)) 4))
+    (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) 8))
+    (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d)))
+    (print (- 0 1))'''
 
         print(term.__str__())
 
         y = transformer.visit(term)
         print(y)
-        # x = interpreter.execute(term)
+        x = interpreter.execute(term)
+        x = '''(sequence (declare a 16) (declare b 32) (declare c 64) (declare d 128) (print 15) (print (+ (lookup d) 7)) (print (+ (lookup c) 11)) (print (+ (+ (lookup c) (lookup d)) 3)) (print (+ (lookup b) 13)) (print (+ (+ (lookup b) (lookup d)) 5)) (print (+ (+ (lookup b) (lookup c)) 9)) (print (+ (+ (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 14)) (print (+ (+ (lookup a) (lookup d)) 6)) (print (+ (+ (lookup a) (lookup c)) 10)) (print (+ (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 12)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 1)) (print (- 7 (lookup d))) (print (- (lookup c) 5)) (print (+ (- (lookup c) (lookup d)) 3)) (print (- (lookup b) 3)) (print (+ (- (lookup b) (lookup d)) 5)) (print (- (+ (lookup b) (lookup c)) 7)) (print (+ (- (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 2)) (print (+ (- (lookup a) (lookup d)) 6)) (print (- (+ (lookup a) (lookup c)) 6)) (print (+ (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 9)) (print (- (- 0 (lookup d)) 1)) (print (- (- 0 (lookup c)) 5)) (print (- (- 3 (lookup c)) (lookup d))) (print (- (lookup b) 11)) (print (- (- (lookup b) (lookup d)) 3)) (print (- (- (lookup b) (lookup c)) 7)) (print (+ (- (- (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 10)) (print (- (- (lookup a) (lookup d)) 2)) (print (- (- (lookup a) (lookup c)) 6)) (print (+ (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 12)) (print (- (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 7) (print (- (lookup d) 1)) (print (- 11 (lookup c))) (print (+ (- (lookup d) (lookup c)) 3)) (print (+ (lookup b) 5)) (print (- (+ (lookup b) (lookup d)) 3)) (print (+ (- (lookup b) (lookup c)) 9)) (print (+ (+ (- (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 6)) (print (- (+ (lookup a) (lookup d)) 2)) (print (+ (- (lookup a) (lookup c)) 10)) (print (+ (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 11) (print (+ (lookup d) 3)) (print (+ (lookup c) 7)) (print (- (+ (lookup c) (lookup d)) 1)) (print (- 13 (lookup b))) (print (+ (- (lookup d) (lookup b)) 5)) (print (+ (- (lookup c) (lookup b)) 9)) (print (+ (+ (- (lookup c) (lookup b)) (lookup d)) 1)) (print (+ (lookup a) 10)) (print (+ (+ (lookup a) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup c)) 6)) (print (- (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 12)) (print (+ (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 5)) (print (- 3 (lookup d))) (print (- (lookup c) 9)) (print (- (- (lookup c) (lookup d)) 1)) (print (- (- 0 (lookup b)) 3)) (print (- (- 5 (lookup b)) (lookup d))) (print (- (- (lookup c) (lookup b)) 7)) (print (+ (- (- (lookup c) (lookup b)) (lookup d)) 1)) (print (- (lookup a) 6)) (print (+ (- (lookup a) (lookup d)) 2)) (print (- (+ (lookup a) (lookup c)) 10)) (print (- (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 13)) (print (- (- 0 (lookup d)) 5)) (print (- (- 0 (lookup c)) 9)) (print (- (- (- 0 (lookup c)) (lookup d)) 1)) (print (- (- 0 (lookup b)) 11)) (print (- (- (- 0 (lookup b)) (lookup d)) 3)) (print (- (- (- 0 (lookup b)) (lookup c)) 7)) (print (- (- (- 1 (lookup b)) (lookup c)) (lookup d))) (print (- (lookup a) 14)) (print (- (- (lookup a) (lookup d)) 6)) (print (- (- (lookup a) (lookup c)) 10)) (print (- (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 12)) (print (- (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 3) (print (- (lookup d) 5)) (print (- 7 (lookup c))) (print (- (- (lookup d) (lookup c)) 1)) (print (- 5 (lookup b))) (print (- (- (lookup d) (lookup b)) 3)) (print (- (- 9 (lookup b)) (lookup c))) (print (+ (- (- (lookup d) (lookup b)) (lookup c)) 1)) (print (+ (lookup a) 2)) (print (- (+ (lookup a) (lookup d)) 6)) (print (+ (- (lookup a) (lookup c)) 6)) (print (- (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))))'''
+        y = '''(sequence (declare a 16) (declare b 32) (declare c 64) (declare d 128) (print 15) (print (+ (lookup d) 7)) (print (+ (lookup c) 11)) (print (+ (+ (lookup c) (lookup d)) 3)) (print (+ (lookup b) 13)) (print (+ (+ (lookup b) (lookup d)) 5)) (print (+ (+ (lookup b) (lookup c)) 9)) (print (+ (+ (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 14)) (print (+ (+ (lookup a) (lookup d)) 6)) (print (+ (+ (lookup a) (lookup c)) 10)) (print (+ (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 12)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 1)) (print (- 7 (lookup d))) (print (- (lookup c) 5)) (print (+ (- (lookup c) (lookup d)) 3)) (print (- (lookup b) 3)) (print (+ (- (lookup b) (lookup d)) 5)) (print (- (+ (lookup b) (lookup c)) 7)) (print (+ (- (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 2)) (print (+ (- (lookup a) (lookup d)) 6)) (print (- (+ (lookup a) (lookup c)) 6)) (print (+ (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 9)) (print (- (- 0 (lookup d)) 1)) (print (- (- 0 (lookup c)) 5)) (print (- (- 3 (lookup c)) (lookup d))) (print (- (lookup b) 11)) (print (- (- (lookup b) (lookup d)) 3)) (print (- (- (lookup b) (lookup c)) 7)) (print (+ (- (- (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 10)) (print (- (- (lookup a) (lookup d)) 2)) (print (- (- (lookup a) (lookup c)) 6)) (print (+ (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 12)) (print (- (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 7) (print (- (lookup d) 1)) (print (- 11 (lookup c))) (print (+ (- (lookup d) (lookup c)) 3)) (print (+ (lookup b) 5)) (print (- (+ (lookup b) (lookup d)) 3)) (print (+ (- (lookup b) (lookup c)) 9)) (print (+ (+ (- (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 6)) (print (- (+ (lookup a) (lookup d)) 2)) (print (+ (- (lookup a) (lookup c)) 10)) (print (+ (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 11) (print (+ (lookup d) 3)) (print (+ (lookup c) 7)) (print (- (+ (lookup c) (lookup d)) 1)) (print (- 13 (lookup b))) (print (+ (- (lookup d) (lookup b)) 5)) (print (+ (- (lookup c) (lookup b)) 9)) (print (+ (+ (- (lookup c) (lookup b)) (lookup d)) 1)) (print (+ (lookup a) 10)) (print (+ (+ (lookup a) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup c)) 6)) (print (- (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 12)) (print (+ (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 5)) (print (- 3 (lookup d))) (print (- (lookup c) 9)) (print (- (- (lookup c) (lookup d)) 1)) (print (- (- 0 (lookup b)) 3)) (print (- (- 5 (lookup b)) (lookup d))) (print (- (- (lookup c) (lookup b)) 7)) (print (+ (- (- (lookup c) (lookup b)) (lookup d)) 1)) (print (- (lookup a) 6)) (print (+ (- (lookup a) (lookup d)) 2)) (print (- (+ (lookup a) (lookup c)) 10)) (print (- (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 13)) (print (- (- 0 (lookup d)) 5)) (print (- (- 0 (lookup c)) 9)) (print (- (- (- 0 (lookup c)) (lookup d)) 1)) (print (- (- 0 (lookup b)) 11)) (print (- (- (- 0 (lookup b)) (lookup d)) 3)) (print (- (- (- 0 (lookup b)) (lookup c)) 7)) (print (- (- (- 1 (lookup b)) (lookup c)) (lookup d))) (print (- (lookup a) 14)) (print (- (- (lookup a) (lookup d)) 6)) (print (- (- (lookup a) (lookup c)) 10)) (print (- (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 12)) (print (- (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 3) (print (- (lookup d) 5)) (print (- 7 (lookup c))) (print (- (- (lookup d) (lookup c)) 1)) (print (- 5 (lookup b))) (print (- (- (lookup d) (lookup b)) 3)) (print (- (- 9 (lookup b)) (lookup c))) (print (+ (- (- (lookup d) (lookup b)) (lookup c)) 1)) (print (+ (lookup a) 2)) (print (- (+ (lookup a) (lookup d)) 6)) (print (+ (- (lookup a) (lookup c)) 6)) (print (- (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))))'''
+        print(x)
+
 
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
