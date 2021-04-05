@@ -16,15 +16,22 @@ class ConstantFoldingTransform:
         :param node: statement parse or int
         :return: node
         '''
-        try:
-            node.children = [
-                self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
-                for child in node.children
-            ]
-            return self.transform(node)
-        except AttributeError as error:
-            print(error)
-            return node
+
+        node.children = [
+            self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
+            for child in node.children
+        ]
+        return self.transform(node)
+
+        # try:
+        #     node.children = [
+        #         self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
+        #         for child in node.children
+        #     ]
+        #     return self.transform(node)
+        # except AttributeError as error:
+        #     print(error)
+        #     return node
 
     # make a case 3 that will go for list and list
 
@@ -288,6 +295,12 @@ class ConstantFoldingTransform:
             return node
         if isinstance(node, IntergerParse):
             node.value = node.value * -1
+            return node
+        if node.type in "+-":
+            node.type = "+"
+            #set to plus and set all values as opposite
+            for child in node.children:
+                self.flip_sign(child)
             return node
         if node.value[0] == "-":
             node.value = node.value[1:]
@@ -1660,9 +1673,9 @@ class Parser:
         term = parser.parse('''
         
         var i = 3;
-        print 12-(i*2)-32-(i-3)+43-(12*i);
+        print 1-(12-(i*2)-32-(i-3)+43-(12*i));
         
-        # check for correct sign flip and constant combination in a long add/sub chain
+        # ability to perform chain and flip the sign of the chain and get correct value
 
 
 ''')
@@ -1678,8 +1691,8 @@ class Parser:
 
         transformed_term = transformer.visit(term)
         print(transformed_term)
-        # x = interpreter.execute(term)
-        z = interpreter.execute(transformed_term)
+        x = interpreter.execute(term)
+        # z = interpreter.execute(transformed_term)
 
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
