@@ -128,7 +128,7 @@ class ConstantFoldingTransform:
                 new_statement.children.append(IntergerParse(0, 0))
                 new_statement.children.append(IntergerParse(result_sum * -1, 0))
                 return new_statement
-            return result_sum
+            return IntergerParse(result_sum, 0)
         result_sum = IntergerParse(result_sum, 0)
         if result_sum.value != 0:
             remaining_children.append(result_sum)  # add the sum as the last child
@@ -1675,134 +1675,135 @@ var a = 16;
 var b = 32;
 var c = 64;
 var d = 128;
-print (1 + 2) + (4 + 8); # 15
-print (1 + 2) + (4 + d); # 135
-print (1 + 2) + (c + 8); # 75
-print (1 + 2) + (c + d); # 195
-print (1 + b) + (4 + 8); # 45
-print (1 + b) + (4 + d); # 165
-print (1 + b) + (c + 8); # 105
-print (1 + b) + (c + d); # 225
-print (a + 2) + (4 + 8); # 30
-print (a + 2) + (4 + d); # 150
-print (a + 2) + (c + 8); # 90
-print (a + 2) + (c + d); # 210
-print (a + b) + (4 + 8); # 60
-print (a + b) + (4 + d); # 180
-print (a + b) + (c + 8); # 120
-print (a + b) + (c + d); # 240
-print (1 + 2) + (4 - 8); # -1
-print (1 + 2) + (4 - d); # -121
-print (1 + 2) + (c - 8); # 59
-print (1 + 2) + (c - d); # -61
-print (1 + b) + (4 - 8); # 29
-print (1 + b) + (4 - d); # -91
-print (1 + b) + (c - 8); # 89
-print (1 + b) + (c - d); # -31
-print (a + 2) + (4 - 8); # 14
-print (a + 2) + (4 - d); # -106
-print (a + 2) + (c - 8); # 74
-print (a + 2) + (c - d); # -46
-print (a + b) + (4 - 8); # 44
-print (a + b) + (4 - d); # -76
-print (a + b) + (c - 8); # 104
-print (a + b) + (c - d); # -16
-print (1 + 2) - (4 + 8); # -9
-print (1 + 2) - (4 + d); # -129
-print (1 + 2) - (c + 8); # -69
-print (1 + 2) - (c + d); # -189
-print (1 + b) - (4 + 8); # 21
-print (1 + b) - (4 + d); # -99
-print (1 + b) - (c + 8); # -39
-print (1 + b) - (c + d); # -159
-print (a + 2) - (4 + 8); # 6
-print (a + 2) - (4 + d); # -114
-print (a + 2) - (c + 8); # -54
-print (a + 2) - (c + d); # -174
-print (a + b) - (4 + 8); # 36
-print (a + b) - (4 + d); # -84
-print (a + b) - (c + 8); # -24
-print (a + b) - (c + d); # -144
 print (1 + 2) - (4 - 8); # 7
-print (1 + 2) - (4 - d); # 127
-print (1 + 2) - (c - 8); # -53
-print (1 + 2) - (c - d); # 67
-print (1 + b) - (4 - 8); # 37
-print (1 + b) - (4 - d); # 157
-print (1 + b) - (c - 8); # -23
-print (1 + b) - (c - d); # 97
-print (a + 2) - (4 - 8); # 22
-print (a + 2) - (4 - d); # 142
-print (a + 2) - (c - 8); # -38
-print (a + 2) - (c - d); # 82
-print (a + b) - (4 - 8); # 52
-print (a + b) - (4 - d); # 172
-print (a + b) - (c - 8); # -8
-print (a + b) - (c - d); # 112
-print (1 - 2) + (4 + 8); # 11
-print (1 - 2) + (4 + d); # 131
-print (1 - 2) + (c + 8); # 71
-print (1 - 2) + (c + d); # 191
-print (1 - b) + (4 + 8); # -19
-print (1 - b) + (4 + d); # 101
-print (1 - b) + (c + 8); # 41
-print (1 - b) + (c + d); # 161
-print (a - 2) + (4 + 8); # 26
-print (a - 2) + (4 + d); # 146
-print (a - 2) + (c + 8); # 86
-print (a - 2) + (c + d); # 206
-print (a - b) + (4 + 8); # -4
-print (a - b) + (4 + d); # 116
-print (a - b) + (c + 8); # 56
-print (a - b) + (c + d); # 176
-print (1 - 2) + (4 - 8); # -5
-print (1 - 2) + (4 - d); # -125
-print (1 - 2) + (c - 8); # 55
-print (1 - 2) + (c - d); # -65
-print (1 - b) + (4 - 8); # -35
-print (1 - b) + (4 - d); # -155
-print (1 - b) + (c - 8); # 25
-print (1 - b) + (c - d); # -95
-print (a - 2) + (4 - 8); # 10
-print (a - 2) + (4 - d); # -110
-print (a - 2) + (c - 8); # 70
-print (a - 2) + (c - d); # -50
-print (a - b) + (4 - 8); # -20
-print (a - b) + (4 - d); # -140
-print (a - b) + (c - 8); # 40
-print (a - b) + (c - d); # -80
-print (1 - 2) - (4 + 8); # -13
-print (1 - 2) - (4 + d); # -133
-print (1 - 2) - (c + 8); # -73
-print (1 - 2) - (c + d); # -193
-print (1 - b) - (4 + 8); # -43
-print (1 - b) - (4 + d); # -163
-print (1 - b) - (c + 8); # -103
-print (1 - b) - (c + d); # -223
-print (a - 2) - (4 + 8); # 2
-print (a - 2) - (4 + d); # -118
-print (a - 2) - (c + 8); # -58
-print (a - 2) - (c + d); # -178
-print (a - b) - (4 + 8); # -28
-print (a - b) - (4 + d); # -148
-print (a - b) - (c + 8); # -88
-print (a - b) - (c + d); # -208
-print (1 - 2) - (4 - 8); # 3
-print (1 - 2) - (4 - d); # 123
-print (1 - 2) - (c - 8); # -57
-print (1 - 2) - (c - d); # 63
-print (1 - b) - (4 - 8); # -27
-print (1 - b) - (4 - d); # 93
-print (1 - b) - (c - 8); # -87
-print (1 - b) - (c - d); # 33
-print (a - 2) - (4 - 8); # 18
-print (a - 2) - (4 - d); # 138
-print (a - 2) - (c - 8); # -42
-print (a - 2) - (c - d); # 78
-print (a - b) - (4 - 8); # -12
-print (a - b) - (4 - d); # 108
-print (a - b) - (c - 8); # -72
-print (a - b) - (c - d); # 48
+# print (1 + 2) + (4 + 8); # 15
+# print (1 + 2) + (4 + d); # 135
+# print (1 + 2) + (c + 8); # 75
+# print (1 + 2) + (c + d); # 195
+# print (1 + b) + (4 + 8); # 45
+# print (1 + b) + (4 + d); # 165
+# print (1 + b) + (c + 8); # 105
+# print (1 + b) + (c + d); # 225
+# print (a + 2) + (4 + 8); # 30
+# print (a + 2) + (4 + d); # 150
+# print (a + 2) + (c + 8); # 90
+# print (a + 2) + (c + d); # 210
+# print (a + b) + (4 + 8); # 60
+# print (a + b) + (4 + d); # 180
+# print (a + b) + (c + 8); # 120
+# print (a + b) + (c + d); # 240
+# print (1 + 2) + (4 - 8); # -1
+# print (1 + 2) + (4 - d); # -121
+# print (1 + 2) + (c - 8); # 59
+# print (1 + 2) + (c - d); # -61
+# print (1 + b) + (4 - 8); # 29
+# print (1 + b) + (4 - d); # -91
+# print (1 + b) + (c - 8); # 89
+# print (1 + b) + (c - d); # -31
+# print (a + 2) + (4 - 8); # 14
+# print (a + 2) + (4 - d); # -106
+# print (a + 2) + (c - 8); # 74
+# print (a + 2) + (c - d); # -46
+# print (a + b) + (4 - 8); # 44
+# print (a + b) + (4 - d); # -76
+# print (a + b) + (c - 8); # 104
+# print (a + b) + (c - d); # -16
+# print (1 + 2) - (4 + 8); # -9
+# print (1 + 2) - (4 + d); # -129
+# print (1 + 2) - (c + 8); # -69
+# print (1 + 2) - (c + d); # -189
+# print (1 + b) - (4 + 8); # 21
+# print (1 + b) - (4 + d); # -99
+# print (1 + b) - (c + 8); # -39
+# print (1 + b) - (c + d); # -159
+# print (a + 2) - (4 + 8); # 6
+# print (a + 2) - (4 + d); # -114
+# print (a + 2) - (c + 8); # -54
+# print (a + 2) - (c + d); # -174
+# print (a + b) - (4 + 8); # 36
+# print (a + b) - (4 + d); # -84
+# print (a + b) - (c + 8); # -24
+# print (a + b) - (c + d); # -144
+# print (1 + 2) - (4 - 8); # 7
+# print (1 + 2) - (4 - d); # 127
+# print (1 + 2) - (c - 8); # -53
+# print (1 + 2) - (c - d); # 67
+# print (1 + b) - (4 - 8); # 37
+# print (1 + b) - (4 - d); # 157
+# print (1 + b) - (c - 8); # -23
+# print (1 + b) - (c - d); # 97
+# print (a + 2) - (4 - 8); # 22
+# print (a + 2) - (4 - d); # 142
+# print (a + 2) - (c - 8); # -38
+# print (a + 2) - (c - d); # 82
+# print (a + b) - (4 - 8); # 52
+# print (a + b) - (4 - d); # 172
+# print (a + b) - (c - 8); # -8
+# print (a + b) - (c - d); # 112
+# print (1 - 2) + (4 + 8); # 11
+# print (1 - 2) + (4 + d); # 131
+# print (1 - 2) + (c + 8); # 71
+# print (1 - 2) + (c + d); # 191
+# print (1 - b) + (4 + 8); # -19
+# print (1 - b) + (4 + d); # 101
+# print (1 - b) + (c + 8); # 41
+# print (1 - b) + (c + d); # 161
+# print (a - 2) + (4 + 8); # 26
+# print (a - 2) + (4 + d); # 146
+# print (a - 2) + (c + 8); # 86
+# print (a - 2) + (c + d); # 206
+# print (a - b) + (4 + 8); # -4
+# print (a - b) + (4 + d); # 116
+# print (a - b) + (c + 8); # 56
+# print (a - b) + (c + d); # 176
+# print (1 - 2) + (4 - 8); # -5
+# print (1 - 2) + (4 - d); # -125
+# print (1 - 2) + (c - 8); # 55
+# print (1 - 2) + (c - d); # -65
+# print (1 - b) + (4 - 8); # -35
+# print (1 - b) + (4 - d); # -155
+# print (1 - b) + (c - 8); # 25
+# print (1 - b) + (c - d); # -95
+# print (a - 2) + (4 - 8); # 10
+# print (a - 2) + (4 - d); # -110
+# print (a - 2) + (c - 8); # 70
+# print (a - 2) + (c - d); # -50
+# print (a - b) + (4 - 8); # -20
+# print (a - b) + (4 - d); # -140
+# print (a - b) + (c - 8); # 40
+# print (a - b) + (c - d); # -80
+# print (1 - 2) - (4 + 8); # -13
+# print (1 - 2) - (4 + d); # -133
+# print (1 - 2) - (c + 8); # -73
+# print (1 - 2) - (c + d); # -193
+# print (1 - b) - (4 + 8); # -43
+# print (1 - b) - (4 + d); # -163
+# print (1 - b) - (c + 8); # -103
+# print (1 - b) - (c + d); # -223
+# print (a - 2) - (4 + 8); # 2
+# print (a - 2) - (4 + d); # -118
+# print (a - 2) - (c + 8); # -58
+# print (a - 2) - (c + d); # -178
+# print (a - b) - (4 + 8); # -28
+# print (a - b) - (4 + d); # -148
+# print (a - b) - (c + 8); # -88
+# print (a - b) - (c + d); # -208
+# print (1 - 2) - (4 - 8); # 3
+# print (1 - 2) - (4 - d); # 123
+# print (1 - 2) - (c - 8); # -57
+# print (1 - 2) - (c - d); # 63
+# print (1 - b) - (4 - 8); # -27
+# print (1 - b) - (4 - d); # 93
+# print (1 - b) - (c - 8); # -87
+# print (1 - b) - (c - d); # 33
+# print (a - 2) - (4 - 8); # 18
+# print (a - 2) - (4 - d); # 138
+# print (a - 2) - (c - 8); # -42
+# print (a - 2) - (c - d); # 78
+# print (a - b) - (4 - 8); # -12
+# print (a - b) - (4 - d); # 108
+# print (a - b) - (c - 8); # -72
+# print (a - b) - (c - d); # 48
 
 
 
@@ -1830,6 +1831,93 @@ print (a - b) - (c - d); # 48
         x = interpreter.execute(term)
         x = '''(sequence (declare a 16) (declare b 32) (declare c 64) (declare d 128) (print 15) (print (+ (lookup d) 7)) (print (+ (lookup c) 11)) (print (+ (+ (lookup c) (lookup d)) 3)) (print (+ (lookup b) 13)) (print (+ (+ (lookup b) (lookup d)) 5)) (print (+ (+ (lookup b) (lookup c)) 9)) (print (+ (+ (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 14)) (print (+ (+ (lookup a) (lookup d)) 6)) (print (+ (+ (lookup a) (lookup c)) 10)) (print (+ (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 12)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 1)) (print (- 7 (lookup d))) (print (- (lookup c) 5)) (print (+ (- (lookup c) (lookup d)) 3)) (print (- (lookup b) 3)) (print (+ (- (lookup b) (lookup d)) 5)) (print (- (+ (lookup b) (lookup c)) 7)) (print (+ (- (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 2)) (print (+ (- (lookup a) (lookup d)) 6)) (print (- (+ (lookup a) (lookup c)) 6)) (print (+ (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 9)) (print (- (- 0 (lookup d)) 1)) (print (- (- 0 (lookup c)) 5)) (print (- (- 3 (lookup c)) (lookup d))) (print (- (lookup b) 11)) (print (- (- (lookup b) (lookup d)) 3)) (print (- (- (lookup b) (lookup c)) 7)) (print (+ (- (- (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 10)) (print (- (- (lookup a) (lookup d)) 2)) (print (- (- (lookup a) (lookup c)) 6)) (print (+ (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 12)) (print (- (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 7) (print (- (lookup d) 1)) (print (- 11 (lookup c))) (print (+ (- (lookup d) (lookup c)) 3)) (print (+ (lookup b) 5)) (print (- (+ (lookup b) (lookup d)) 3)) (print (+ (- (lookup b) (lookup c)) 9)) (print (+ (+ (- (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 6)) (print (- (+ (lookup a) (lookup d)) 2)) (print (+ (- (lookup a) (lookup c)) 10)) (print (+ (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 11) (print (+ (lookup d) 3)) (print (+ (lookup c) 7)) (print (- (+ (lookup c) (lookup d)) 1)) (print (- 13 (lookup b))) (print (+ (- (lookup d) (lookup b)) 5)) (print (+ (- (lookup c) (lookup b)) 9)) (print (+ (+ (- (lookup c) (lookup b)) (lookup d)) 1)) (print (+ (lookup a) 10)) (print (+ (+ (lookup a) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup c)) 6)) (print (- (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 12)) (print (+ (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 5)) (print (- 3 (lookup d))) (print (- (lookup c) 9)) (print (- (- (lookup c) (lookup d)) 1)) (print (- (- 0 (lookup b)) 3)) (print (- (- 5 (lookup b)) (lookup d))) (print (- (- (lookup c) (lookup b)) 7)) (print (+ (- (- (lookup c) (lookup b)) (lookup d)) 1)) (print (- (lookup a) 6)) (print (+ (- (lookup a) (lookup d)) 2)) (print (- (+ (lookup a) (lookup c)) 10)) (print (- (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 13)) (print (- (- 0 (lookup d)) 5)) (print (- (- 0 (lookup c)) 9)) (print (- (- (- 0 (lookup c)) (lookup d)) 1)) (print (- (- 0 (lookup b)) 11)) (print (- (- (- 0 (lookup b)) (lookup d)) 3)) (print (- (- (- 0 (lookup b)) (lookup c)) 7)) (print (- (- (- 1 (lookup b)) (lookup c)) (lookup d))) (print (- (lookup a) 14)) (print (- (- (lookup a) (lookup d)) 6)) (print (- (- (lookup a) (lookup c)) 10)) (print (- (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 12)) (print (- (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 3) (print (- (lookup d) 5)) (print (- 7 (lookup c))) (print (- (- (lookup d) (lookup c)) 1)) (print (- 5 (lookup b))) (print (- (- (lookup d) (lookup b)) 3)) (print (- (- 9 (lookup b)) (lookup c))) (print (+ (- (- (lookup d) (lookup b)) (lookup c)) 1)) (print (+ (lookup a) 2)) (print (- (+ (lookup a) (lookup d)) 6)) (print (+ (- (lookup a) (lookup c)) 6)) (print (- (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))))'''
         y = '''(sequence (declare a 16) (declare b 32) (declare c 64) (declare d 128) (print 15) (print (+ (lookup d) 7)) (print (+ (lookup c) 11)) (print (+ (+ (lookup c) (lookup d)) 3)) (print (+ (lookup b) 13)) (print (+ (+ (lookup b) (lookup d)) 5)) (print (+ (+ (lookup b) (lookup c)) 9)) (print (+ (+ (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 14)) (print (+ (+ (lookup a) (lookup d)) 6)) (print (+ (+ (lookup a) (lookup c)) 10)) (print (+ (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 12)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 1)) (print (- 7 (lookup d))) (print (- (lookup c) 5)) (print (+ (- (lookup c) (lookup d)) 3)) (print (- (lookup b) 3)) (print (+ (- (lookup b) (lookup d)) 5)) (print (- (+ (lookup b) (lookup c)) 7)) (print (+ (- (+ (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 2)) (print (+ (- (lookup a) (lookup d)) 6)) (print (- (+ (lookup a) (lookup c)) 6)) (print (+ (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 9)) (print (- (- 0 (lookup d)) 1)) (print (- (- 0 (lookup c)) 5)) (print (- (- 3 (lookup c)) (lookup d))) (print (- (lookup b) 11)) (print (- (- (lookup b) (lookup d)) 3)) (print (- (- (lookup b) (lookup c)) 7)) (print (+ (- (- (lookup b) (lookup c)) (lookup d)) 1)) (print (- (lookup a) 10)) (print (- (- (lookup a) (lookup d)) 2)) (print (- (- (lookup a) (lookup c)) 6)) (print (+ (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (+ (lookup a) (lookup b)) 12)) (print (- (- (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 7) (print (- (lookup d) 1)) (print (- 11 (lookup c))) (print (+ (- (lookup d) (lookup c)) 3)) (print (+ (lookup b) 5)) (print (- (+ (lookup b) (lookup d)) 3)) (print (+ (- (lookup b) (lookup c)) 9)) (print (+ (+ (- (lookup b) (lookup c)) (lookup d)) 1)) (print (+ (lookup a) 6)) (print (- (+ (lookup a) (lookup d)) 2)) (print (+ (- (lookup a) (lookup c)) 10)) (print (+ (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup b)) 4)) (print (- (+ (+ (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (+ (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 11) (print (+ (lookup d) 3)) (print (+ (lookup c) 7)) (print (- (+ (lookup c) (lookup d)) 1)) (print (- 13 (lookup b))) (print (+ (- (lookup d) (lookup b)) 5)) (print (+ (- (lookup c) (lookup b)) 9)) (print (+ (+ (- (lookup c) (lookup b)) (lookup d)) 1)) (print (+ (lookup a) 10)) (print (+ (+ (lookup a) (lookup d)) 2)) (print (+ (+ (lookup a) (lookup c)) 6)) (print (- (+ (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 12)) (print (+ (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 5)) (print (- 3 (lookup d))) (print (- (lookup c) 9)) (print (- (- (lookup c) (lookup d)) 1)) (print (- (- 0 (lookup b)) 3)) (print (- (- 5 (lookup b)) (lookup d))) (print (- (- (lookup c) (lookup b)) 7)) (print (+ (- (- (lookup c) (lookup b)) (lookup d)) 1)) (print (- (lookup a) 6)) (print (+ (- (lookup a) (lookup d)) 2)) (print (- (+ (lookup a) (lookup c)) 10)) (print (- (- (+ (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (+ (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print (- 0 13)) (print (- (- 0 (lookup d)) 5)) (print (- (- 0 (lookup c)) 9)) (print (- (- (- 0 (lookup c)) (lookup d)) 1)) (print (- (- 0 (lookup b)) 11)) (print (- (- (- 0 (lookup b)) (lookup d)) 3)) (print (- (- (- 0 (lookup b)) (lookup c)) 7)) (print (- (- (- 1 (lookup b)) (lookup c)) (lookup d))) (print (- (lookup a) 14)) (print (- (- (lookup a) (lookup d)) 6)) (print (- (- (lookup a) (lookup c)) 10)) (print (- (- (- (lookup a) (lookup c)) (lookup d)) 2)) (print (- (- (lookup a) (lookup b)) 12)) (print (- (- (- (lookup a) (lookup b)) (lookup d)) 4)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (- (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))) (print 3) (print (- (lookup d) 5)) (print (- 7 (lookup c))) (print (- (- (lookup d) (lookup c)) 1)) (print (- 5 (lookup b))) (print (- (- (lookup d) (lookup b)) 3)) (print (- (- 9 (lookup b)) (lookup c))) (print (+ (- (- (lookup d) (lookup b)) (lookup c)) 1)) (print (+ (lookup a) 2)) (print (- (+ (lookup a) (lookup d)) 6)) (print (+ (- (lookup a) (lookup c)) 6)) (print (- (+ (- (lookup a) (lookup c)) (lookup d)) 2)) (print (+ (- (lookup a) (lookup b)) 4)) (print (- (+ (- (lookup a) (lookup b)) (lookup d)) 4)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) 8)) (print (+ (- (- (lookup a) (lookup b)) (lookup c)) (lookup d))))'''
+        expected_output = '''
+
+7
+127
+-53
+67
+37
+157
+-23
+97
+22
+142
+-38
+82
+52
+172
+-8
+112
+11
+131
+71
+191
+-19
+101
+41
+161
+26
+146
+86
+206
+-4
+116
+56
+176
+-5
+-125
+55
+-65
+-35
+-155
+25
+-95
+10
+-110
+70
+-50
+-20
+-140
+40
+-80
+-13
+-133
+-73
+-193
+-43
+-163
+-103
+-223
+2
+-118
+-58
+-178
+-28
+-148
+-88
+-208
+3
+123
+-57
+63
+-27
+93
+-87
+33
+18
+138
+-42
+78
+-12
+108
+-72
+48
+
+        '''
+        actual_output =    '''
+-144
+'''
         print(x)
 
 
