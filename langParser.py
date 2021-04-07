@@ -10,69 +10,58 @@ class ConstantFoldingTransform:
         self.parser = Parser()
         self.sign = lambda x: copysign(1, x)
 
+
+    def is_add_sub(self, node):
+        return node.type in '+-'
+
+    def is_mul_div(self, node):
+        return node.type in '*/'
+
     def visit(self, node):
-        '''
-        tries to access node.children, if fail return the node, meaning it has no children and is an integer
-        :param node: statement parse or int
-        :return: node
-        '''
-
-        node.children = [
-            self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
-            for child in node.children
-        ]
-        return self.transform(node)
-
-        # try:
-        #     node.children = [
-        #         self.visit(child) if isinstance(child, StatementParse) else child  # change to statement parse
-        #         for child in node.children
-        #     ]
-        #     return self.transform(node)
-        # except AttributeError as error:
-        #     print(error)
-        #     return node
-
-    # make a case 3 that will go for list and list
-
-    def transform(self, node):
-        untouched_node = deepcopy(node)
-        if node.type in '+-':
-            child_one = self.expand(node.children[0], "+")
-            child_two = self.expand(node.children[1], node.type)
-            if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
-                simple_add = child_one.value + child_two.value
-                # simple_add = self.interpreter.transform_eval(node) old code
-                if simple_add < 0:
-                    new_statement = StatementParse(0, "-")
-                    new_statement.children.append(IntergerParse(0, 0))
-                    new_statement.children.append(IntergerParse(simple_add * -1, 0))
-                    return new_statement
-                return IntergerParse(simple_add, 0)
-            if isinstance(child_two, list) and isinstance(child_one, IntergerParse):
-                new_statement = self.case_one(child_one, child_two)
-                if new_statement is not None:
-                    return new_statement
-            if isinstance(child_one, list) and isinstance(child_two, IntergerParse):
-                new_statement = self.case_two(child_one, child_two)
-                if new_statement is not None:
-                    return new_statement
-            if isinstance(child_one, list) and isinstance(child_two, list):
-                new_statement = self.case_three(child_one, child_two)
-                if new_statement is not None:
-                    return new_statement
-            return untouched_node  # FIXME
-        elif node.type in '*/':
-            child_one = node.children[0]
-            child_two = node.children[1]
-            if child_two.value == 0 and node.type == "/":  # if divide by zero don't change
-                return untouched_node
-            if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
-                result_mult_div = self.interpreter.transform_eval(node)
-                return IntergerParse(result_mult_div, 0)
-            return untouched_node  # FIXME
+        if not hasattr(node, "children"):
+            return node
+        children = []
+        for child in node.children:
+            if isinstance(child, StatementParse):
+                child = self.visit(child)
+                if not self.is_add_sub(node) and self.is_add_sub(child):
+                    child = self.add_sub_transform(child)
+            children.append(child)
+        node.children = children
+        if self.is_mul_div(node):
+            return self.mul_div_transform(node)
         else:
-            return untouched_node
+            return node
+
+    def add_sub_transform(self, node):
+        untouched_node = deepcopy(node)
+        child_one = self.expand(node.children[0], "+")
+        child_two = self.expand(node.children[1], node.type)
+        if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
+            simple_add = child_one.value + child_two.value
+            # simple_add = self.interpreter.transform_eval(node) old code
+            if simple_add < 0:
+                new_statement = StatementParse(0, "-")
+                new_statement.children.append(IntergerParse(0, 0))
+                new_statement.children.append(IntergerParse(simple_add * -1, 0))
+                return new_statement
+            return IntergerParse(simple_add, 0)
+        new_statement = self.arrange_terms(child_one, child_two)
+        if new_statement is not None:
+            return new_statement
+        return untouched_node  # FIXME
+
+
+    def mul_div_transform(self, node):
+        child_one = node.children[0]
+        child_two = node.children[1]
+        if child_two.value == 0 and node.type == "/":  # if divide by zero don't change
+            return node
+        if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
+            result_mult_div = self.interpreter.transform_eval(node)
+            return IntergerParse(result_mult_div, 0)
+        return node  # FIXME
+
 
     def case_one(self, child_one, child_two):
         remaining_children = []
@@ -93,6 +82,36 @@ class ConstantFoldingTransform:
                 result_sum += child.value
             else:
                 remaining_children.append(child)
+        x = self.get_new_parse_treeV2(result_sum, remaining_children)
+        return x
+        # remaining_children.append(result)
+
+    def arrange_terms(self, child_one, child_two):
+        all_children = []
+        # get all children from 1
+        if isinstance(child_one, list):
+            for child in child_one:
+                all_children.append(child)
+        else:
+            all_children.append(child_one)
+
+        # get all children from 2
+        if isinstance(child_two, list):
+            for child in child_two:
+                all_children.append(child)
+        else:
+            all_children.append(child_two)
+
+        # move the constants to the back
+
+        result_sum = 0
+        remaining_children = []
+        for child in all_children:
+            if isinstance(child, IntergerParse):
+                result_sum += child.value
+            else:
+                remaining_children.append(child)
+
         x = self.get_new_parse_treeV2(result_sum, remaining_children)
         return x
         # remaining_children.append(result)
@@ -1672,10 +1691,9 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
         
-        var i = 3;
-        print 1-(12-(i*2)-32-(i-3)+43-(12*i));
+        print 1-i-h-5+p;
         
-        # ability to perform chain and flip the sign of the chain and get correct value
+        # check that p will be moved up first because it is positive
 
 
 ''')
@@ -1691,8 +1709,8 @@ class Parser:
 
         transformed_term = transformer.visit(term)
         print(transformed_term)
-        x = interpreter.execute(term)
-        # z = interpreter.execute(transformed_term)
+        # x = interpreter.execute(term)
+        # x = interpreter.execute(transformed_term)
 
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
