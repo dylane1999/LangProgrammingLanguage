@@ -35,10 +35,10 @@ class ConstantFoldingTransform:
     def add_sub_transform(self, node):
         untouched_node = deepcopy(node)
         # problem with expansion
-        child_one = self.expand(node.children[0], "+")
+        child_one = self.expand(node.children[0])
         if node.type == "-":
             node.children[1] = self.flip_sign(node.children[1])
-        child_two = self.expand(node.children[1], "+")
+        child_two = self.expand(node.children[1])
         if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
             simple_add = child_one.value + child_two.value
             # simple_add = self.interpreter.transform_eval(node) old code
@@ -210,7 +210,7 @@ class ConstantFoldingTransform:
             counter += 1
         return parent
 
-    def expand(self, node, sign):
+    def expand(self, node):
         all_children = []
         # if sign == "-":  # FIXME instead use the flip sign function
         #     node.children[0] = self.flip_sign(node.children[0])
@@ -221,12 +221,10 @@ class ConstantFoldingTransform:
             for child in node.children:
                     # all chidlren = all chidlren retiurn val
                 if child.type in "+-":
-                    all_children += self.expand(child, sign)  # could require fixme - the sign of the flipped children
+                    all_children += self.expand(child)  # could require fixme - the sign of the flipped children
                     continue
                 all_children.append(child)
             return all_children
-        if sign == "-":
-            return self.flip_sign(node)
         return node
 
     def flip_sign(self, node):
