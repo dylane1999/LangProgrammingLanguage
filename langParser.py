@@ -63,29 +63,6 @@ class ConstantFoldingTransform:
             return IntergerParse(result_mult_div, 0)
         return node  # FIXME
 
-    def case_one(self, child_one, child_two):
-        remaining_children = []
-        result_sum = child_one.value
-        for child in child_two:
-            if isinstance(child, IntergerParse):
-                result_sum += child.value
-            else:
-                remaining_children.append(child)
-        x = self.get_new_parse_treeV2(result_sum, remaining_children)
-        return x
-
-    def case_two(self, child_one, child_two):
-        remaining_children = []
-        result_sum = child_two.value
-        for child in child_one:
-            if isinstance(child, IntergerParse):
-                result_sum += child.value
-            else:
-                remaining_children.append(child)
-        x = self.get_new_parse_treeV2(result_sum, remaining_children)
-        return x
-        # remaining_children.append(result)
-
     def arrange_terms(self, child_one, child_two):
         all_children = []
         # get all children from 1
@@ -103,7 +80,6 @@ class ConstantFoldingTransform:
             all_children.append(child_two)
 
         # move the constants to the back
-
         result_sum = 0
         remaining_children = []
         for child in all_children:
@@ -112,42 +88,10 @@ class ConstantFoldingTransform:
             else:
                 remaining_children.append(child)
 
-        x = self.get_new_parse_treeV2(result_sum, remaining_children)
-        return x
-        # remaining_children.append(result)
+        resulting_parse_tree = self.get_new_parse_tree(result_sum, remaining_children)
+        return resulting_parse_tree
 
     def get_new_parse_tree(self, result_sum, remaining_children):
-        result_sum = IntergerParse(result_sum, 0)
-        if result_sum.value != 0:
-            remaining_children.append(result_sum)  # add the sum as the last child
-        if not self.is_positive(remaining_children[0]):  # re-arange a postive value to be fist if there is not already
-            first_positive = self.find_first_positive(remaining_children)
-            remaining_children.remove(first_positive)  # remove the first positive
-            remaining_children.insert(0, first_positive)  # and add it in back in at the front
-        # now create the new IR representation
-        sign = self.get_sign(remaining_children[1])  # get the sign of the next element
-        new_statement = StatementParse(0, sign)
-        new_statement.children.append(remaining_children[0])
-        remaining_children.pop(0)  # remove the elemnt at 0 that was just added
-        parent = new_statement
-        counter = 0
-        for child in remaining_children:
-            sign = self.get_sign(child)
-            flipped_child = child
-            if not self.is_positive(child):
-                flipped_child = self.flip_sign(child)
-            if len(parent.children) <= 1:
-                parent.children.append(flipped_child)
-            else:
-                new_statement = StatementParse(0, sign)
-                new_statement.children.append(parent)
-                if counter + 1 >= len(remaining_children):
-                    new_statement.children.append(flipped_child)
-                parent = new_statement
-            counter += 1
-        return parent
-
-    def get_new_parse_treeV2(self, result_sum, remaining_children):
         if len(remaining_children) == 0:
             if result_sum < 0:
                 new_statement = StatementParse(0, "-")
@@ -190,59 +134,36 @@ class ConstantFoldingTransform:
             return result_string
         return str(node.value)
 
-    def case_three(self, child_one, child_two):
-        remaining_children = []
-        result_sum = 0
-        for child in child_one:
-            if isinstance(child, IntergerParse):
-                result_sum += child.value
+    def deprecated_get_new_parse_tree(self, result_sum, remaining_children):
+        result_sum = IntergerParse(result_sum, 0)
+        if result_sum.value != 0:
+            remaining_children.append(result_sum)  # add the sum as the last child
+        if not self.is_positive(remaining_children[0]):  # re-arange a postive value to be fist if there is not already
+            first_positive = self.find_first_positive(remaining_children)
+            remaining_children.remove(first_positive)  # remove the first positive
+            remaining_children.insert(0, first_positive)  # and add it in back in at the front
+        # now create the new IR representation
+        sign = self.get_sign(remaining_children[1])  # get the sign of the next element
+        new_statement = StatementParse(0, sign)
+        new_statement.children.append(remaining_children[0])
+        remaining_children.pop(0)  # remove the elemnt at 0 that was just added
+        parent = new_statement
+        counter = 0
+        for child in remaining_children:
+            sign = self.get_sign(child)
+            flipped_child = child
+            if not self.is_positive(child):
+                flipped_child = self.flip_sign(child)
+            if len(parent.children) <= 1:
+                parent.children.append(flipped_child)
             else:
-                remaining_children.append(child)
-        for child in child_two:
-            if isinstance(child, IntergerParse):
-                result_sum += child.value
-            else:
-                remaining_children.append(child)
-        x = self.get_new_parse_treeV2(result_sum, remaining_children)
-        return x
-
-        # for i in range(len(remaining_children) -1):
-        #     if i+1 >= len(remaining_children):
-        #         parent.children.append(remaining_children[i])
-        #     signx = self.get_sign(remaining_children[i + 1])
-        #     sign = self.get_sign(remaining_children[i+1])
-        #     new_statement = StatementParse(0, sign)
-        #     flipped_child = child
-        #     if not self.is_positive(remaining_children[i]):
-        #         remaining_children[i] = self.flip_sign(remaining_children[i])
-        #
-        #     if not self.is_positive(remaining_children[i+1]):
-        #         remaining_children[i+1] = self.flip_sign(remaining_children[i+1])
-        #
-        #     new_statement.children.append(remaining_children[i])
-        #     new_statement.children.append(remaining_children[i+1])
-        #     new_statement.children.append(flipped_child)
-        #     another_new = StatementParse(0, signx)
-        #     another_new.children.append(parent)
-        #     another_new.children.append(new_statement)
-        #     parent = new_statement
-        # return parent
-
-        # for child in remaining_children:
-        #     sign = self.get_sign(child)
-        #     flipped_child = child
-        #     if not self.is_positive(child):
-        #         flipped_child = self.flip_sign(child)
-        #     if len(parent.children) <= 1:
-        #         parent.children.append(flipped_child)
-        #     else:
-        #         new_statement = StatementParse(0, sign)
-        #         new_statement.children.append(parent)
-        #         if counter+1 >= len(remaining_children):
-        #             new_statement.children.append(flipped_child)
-        #         parent = new_statement
-        #     counter += 1
-        # return parent
+                new_statement = StatementParse(0, sign)
+                new_statement.children.append(parent)
+                if counter + 1 >= len(remaining_children):
+                    new_statement.children.append(flipped_child)
+                parent = new_statement
+            counter += 1
+        return parent
 
     def find_first_positive(self, list_of_children):
         for child in list_of_children:
@@ -400,7 +321,7 @@ class ConstantFoldingTransform:
                 return False
         except AttributeError:
             return True
-        return True   # FIXME CXOULD CAYSEW EEROR
+        return True
 
 
 class Parse:
@@ -1723,7 +1644,11 @@ class Parser:
 
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-print 24 / 3 / 2 / 1 / (24 - 24);
+        
+        var i = 3;
+        print 12-(i*2)-32-(i-3)+43-(12*i)+12-(i*2)-32-(i-3)+43-(12*i) ;
+        
+        # check for correct sign flip and constant combination in a long add/sub and mult/div chain
 
 ''')
 
