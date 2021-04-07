@@ -10,7 +10,6 @@ class ConstantFoldingTransform:
         self.parser = Parser()
         self.sign = lambda x: copysign(1, x)
 
-
     def is_add_sub(self, node):
         return node.type in '+-'
 
@@ -35,8 +34,11 @@ class ConstantFoldingTransform:
 
     def add_sub_transform(self, node):
         untouched_node = deepcopy(node)
+        # problem with expansion
         child_one = self.expand(node.children[0], "+")
-        child_two = self.expand(node.children[1], node.type)
+        if node.type == "-":
+            node.children[1] = self.flip_sign(node.children[1])
+        child_two = self.expand(node.children[1], "+")
         if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
             simple_add = child_one.value + child_two.value
             # simple_add = self.interpreter.transform_eval(node) old code
@@ -51,7 +53,6 @@ class ConstantFoldingTransform:
             return new_statement
         return untouched_node  # FIXME
 
-
     def mul_div_transform(self, node):
         child_one = node.children[0]
         child_two = node.children[1]
@@ -61,7 +62,6 @@ class ConstantFoldingTransform:
             result_mult_div = self.interpreter.transform_eval(node)
             return IntergerParse(result_mult_div, 0)
         return node  # FIXME
-
 
     def case_one(self, child_one, child_two):
         remaining_children = []
@@ -163,10 +163,11 @@ class ConstantFoldingTransform:
             if first_positive is not None:
                 remaining_children.remove(first_positive)  # remove the first positive
                 remaining_children.insert(0, first_positive)  # and add it in back in at the front
-            else: remaining_children.insert(0, IntergerParse(0,0))  # add a zero up front if all negative
+            else:
+                remaining_children.insert(0, IntergerParse(0, 0))  # add a zero up front if all negative
         # now create the new IR representation
         result_string = ""
-        result_string += str(remaining_children[0].value)
+        result_string += self.get_child_as_string(remaining_children[0])
         remaining_children.pop(0)  # remove the elemnt at 0 that was just added
         for child in remaining_children:
             if self.is_positive(child):
@@ -178,7 +179,6 @@ class ConstantFoldingTransform:
         new_ir_tree = self.parser.parse(result_string)
         return new_ir_tree.children[0]
 
-
     def get_child_as_string(self, node):
         if node.type in "*/":
             result_string = ""
@@ -189,7 +189,6 @@ class ConstantFoldingTransform:
             result_string += child_two + " "
             return result_string
         return str(node.value)
-
 
     def case_three(self, child_one, child_two):
         remaining_children = []
@@ -292,12 +291,13 @@ class ConstantFoldingTransform:
 
     def expand(self, node, sign):
         all_children = []
+        # if sign == "-":  # FIXME instead use the flip sign function
+        #     node.children[0] = self.flip_sign(node.children[0])
+        #     node.children[1] = self.flip_sign(node.children[1])
         if hasattr(node, "children") and node.type == "-":
             node.children[1] = self.flip_sign(node.children[1])
         if hasattr(node, "children") and len(node.children) != 0 and node.type in '+-':
             for child in node.children:
-                if sign == "-":
-                    child = self.flip_sign(child)
                     # all chidlren = all chidlren retiurn val
                 if child.type in "+-":
                     all_children += self.expand(child, sign)  # could require fixme - the sign of the flipped children
@@ -316,14 +316,44 @@ class ConstantFoldingTransform:
             node.value = node.value * -1
             return node
         if node.type in "+-":
-            node.type = "+"
-            #set to plus and set all values as opposite
-            for child in node.children:
-                self.flip_sign(child)
+            if node.type == "+":
+                node = self.flip_add(node)
+            elif node.type == "-":
+                node = self.flip_sub(node)
             return node
         if node.value[0] == "-":
             node.value = node.value[1:]
             node.sign = "+"
+            return node
+        node.value = "-" + node.value
+        node.sign = "-"
+        return node
+
+    def flip_add(self, node):
+        node.type = "+"
+        # set to plus and set all values as opposite
+        for child in node.children:
+            self.flip_sign(child)
+        return node
+
+    def flip_sub(self, node):
+        if self.is_positive(node.children[1]):  # flip the sign to negative because it should be
+            self.make_negative(node.children[1])
+        node.type = "+"
+        # set to plus and set all values as opposite
+        for child in node.children:
+            self.flip_sign(child)
+        return node
+
+    def make_negative(self, node):
+        if node.type in '*/':
+            node.sign = "-"
+            return node
+        if isinstance(node, IntergerParse):
+            node.value = node.value * -1
+            return node
+        if node.type in "+-":
+            node = self.flip_sub(node)
             return node
         node.value = "-" + node.value
         node.sign = "-"
@@ -365,9 +395,12 @@ class ConstantFoldingTransform:
                 return False
             else:
                 return True
-        if node.value[0] == "-":
-            return False
-        return True
+        try:
+            if node.value[0] == "-":
+                return False
+        except AttributeError:
+            return True
+        return True   # FIXME CXOULD CAYSEW EEROR
 
 
 class Parse:
@@ -1690,15 +1723,11 @@ class Parser:
 
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-        
-        print 1-i-h-5+p;
-        
-        # check that p will be moved up first because it is positive
-
+print 24 / 3 / 2 / 1 / (24 - 24);
 
 ''')
 
-
+        # 1-(12-(i*2)-32-(i-3)+43-(12*i))
         # var foo = class{
         # var bar = 5;
         # };
@@ -1706,11 +1735,12 @@ class Parser:
         # foo.bar = 6;
         # print foo.bar;
         print(term.__str__())
+        # x = interpreter.execute(term)
 
         transformed_term = transformer.visit(term)
         print(transformed_term)
-        # x = interpreter.execute(term)
-        # x = interpreter.execute(transformed_term)
+        x = interpreter.execute(transformed_term)
+
 
 def test_parse(parser, string, term, expected):
     actual = parser.parse(string, term)
@@ -1730,5 +1760,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
