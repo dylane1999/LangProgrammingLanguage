@@ -41,12 +41,12 @@ class ConstantFoldingTransform:
         child_two = self.expand(node.children[1])
         if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
             simple_add = child_one.value + child_two.value
-            # simple_add = self.interpreter.transform_eval(node) old code
-            if simple_add < 0:
-                new_statement = StatementParse(0, "-")
-                new_statement.children.append(IntergerParse(0, 0))
-                new_statement.children.append(IntergerParse(simple_add * -1, 0))
-                return new_statement
+            # # simple_add = self.interpreter.transform_eval(node) old code
+            # if simple_add < 0:
+            #     new_statement = StatementParse(0, "-")
+            #     new_statement.children.append(IntergerParse(0, 0))
+            #     new_statement.children.append(IntergerParse(simple_add * -1, 0))
+            #     return new_statement
             return IntergerParse(simple_add, 0)
         new_statement = self.arrange_terms(child_one, child_two)
         if new_statement is not None:
@@ -56,12 +56,36 @@ class ConstantFoldingTransform:
     def mul_div_transform(self, node):
         child_one = node.children[0]
         child_two = node.children[1]
-        if child_two.value == 0 and node.type == "/":  # if divide by zero don't change
+        if self.is_divide_by_zero(node):  # if divide by zero don't change
             return node
         if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
             result_mult_div = self.interpreter.transform_eval(node)
             return IntergerParse(result_mult_div, 0)
         return node  # FIXME
+
+    def is_divide_by_zero(self, node):
+
+        # recursively check children for the error
+        if self.is_node_divide_by_zero(node):
+            return True
+        is_error = False
+        if node.type == "/":
+            for child in node.children:
+                if child.type == "/":
+                    if self.is_divide_by_zero(child):
+                        is_error = True
+                        return
+        return is_error
+
+    def is_node_divide_by_zero(self, node):
+        try:
+            # check if child two has a divide by zero error
+            if node.type == "/":
+                child_two = node.children[1]
+                if child_two.value == 0:
+                    return True
+        except Exception:
+            return False
 
     def arrange_terms(self, child_one, child_two):
         all_children = []
@@ -210,11 +234,12 @@ class ConstantFoldingTransform:
             counter += 1
         return parent
 
+    # if sign == "-":  # FIXME instead use the flip sign function
+    #     node.children[0] = self.flip_sign(node.children[0])
+    #     node.children[1] = self.flip_sign(node.children[1])
+
     def expand(self, node):
         all_children = []
-        # if sign == "-":  # FIXME instead use the flip sign function
-        #     node.children[0] = self.flip_sign(node.children[0])
-        #     node.children[1] = self.flip_sign(node.children[1])
         if hasattr(node, "children") and node.type == "-":
             node.children[1] = self.flip_sign(node.children[1])
         if hasattr(node, "children") and len(node.children) != 0 and node.type in '+-':
@@ -257,7 +282,7 @@ class ConstantFoldingTransform:
 
     def flip_sub(self, node):
         if self.is_positive(node.children[1]):  # flip the sign to negative because it should be
-            self.make_negative(node.children[1])
+            self.flip_sign(node.children[1])  # flip child after - sign
         node.type = "+"
         # set to plus and set all values as opposite
         for child in node.children:
@@ -1642,12 +1667,11 @@ class Parser:
 
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-        
-        var i = 3;
-        print 12-(i*2)-32-(i-3)+43-(12*i)+12-(i*2)-32-(i-3)+43-(12*i) ;
-        
-        # check for correct sign flip and constant combination in a long add/sub and mult/div chain
-
+# assign var with expression in terms of itself
+var a = 2;
+a = a - ( a * a - a )/a;
+print a;
+# 1
 ''')
 
         # 1-(12-(i*2)-32-(i-3)+43-(12*i))
