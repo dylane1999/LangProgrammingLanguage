@@ -34,24 +34,20 @@ class ConstantFoldingTransform:
 
     def add_sub_transform(self, node):
         untouched_node = deepcopy(node)
-        # problem with expansion
-        child_one = self.expand(node.children[0])
-        if node.type == "-":
-            node.children[1] = self.flip_sign(node.children[1])
-        child_two = self.expand(node.children[1])
-        if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
-            simple_add = child_one.value + child_two.value
-            # # simple_add = self.interpreter.transform_eval(node) old code
-            # if simple_add < 0:
-            #     new_statement = StatementParse(0, "-")
-            #     new_statement.children.append(IntergerParse(0, 0))
-            #     new_statement.children.append(IntergerParse(simple_add * -1, 0))
-            #     return new_statement
-            return IntergerParse(simple_add, 0)
-        new_statement = self.arrange_terms(child_one, child_two)
-        if new_statement is not None:
-            return new_statement
-        return untouched_node  # FIXME
+        try:
+            # problem with expansion
+            child_one = self.expand(node.children[0])
+            if node.type == "-":
+                node.children[1] = self.flip_sign(node.children[1])
+            child_two = self.expand(node.children[1])
+            if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
+                simple_add = child_one.value + child_two.value
+                return IntergerParse(simple_add, 0)
+            new_statement = self.arrange_terms(child_one, child_two)
+            if new_statement is not None:
+                return new_statement
+        except Exception:  # if an unexpected type like logical operators will fail and return untouched node
+            return untouched_node  # FIXME
 
     def mul_div_transform(self, node):
         child_one = node.children[0]
@@ -149,14 +145,29 @@ class ConstantFoldingTransform:
 
     def get_child_as_string(self, node):
         if node.type in "*/":
-            result_string = ""
-            child_one = self.get_child_as_string(node.children[0])
-            result_string += child_one + " "
-            child_two = self.get_child_as_string(node.children[1])
-            result_string += " " + node.type + " "
-            result_string += child_two + " "
-            return result_string
+            return self.mult_div_as_string(node)
+        if node.type in "+-":
+            return self.add_sub_as_string(node)
         return str(node.value)
+    #create a get string as add minus
+
+    def mult_div_as_string(self, node):
+        result_string = "("
+        child_one = self.get_child_as_string(node.children[0])
+        result_string += child_one + " "
+        child_two = self.get_child_as_string(node.children[1])
+        result_string += " " + node.type + " "
+        result_string += child_two + ") "
+        return result_string
+
+    def add_sub_as_string(self, node):
+        result_string = "("
+        child_one = self.get_child_as_string(node.children[0])
+        result_string += child_one + " "
+        child_two = self.get_child_as_string(node.children[1])
+        result_string += " " + node.type + " "
+        result_string += child_two + ") "
+        return result_string
 
     def deprecated_get_new_parse_tree(self, result_sum, remaining_children):
         result_sum = IntergerParse(result_sum, 0)
@@ -1667,11 +1678,8 @@ class Parser:
 
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
-# assign var with expression in terms of itself
-var a = 2;
-a = a - ( a * a - a )/a;
-print a;
-# 1
+print 0 || 0 == (! 1) && 0+1;    
+print 0 || 0 == ((! 1) && 0)+1; 
 ''')
 
         # 1-(12-(i*2)-32-(i-3)+43-(12*i))
