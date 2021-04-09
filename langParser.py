@@ -47,6 +47,22 @@ class StatementParse():
         expression_result += ")"
         return expression_result
 
+class FunctionSignature():
+
+    def __init__(self, type):
+        self.type = type
+        self.children = []
+
+    def __str__(self):
+        # if statement parse print the operator type and children to string
+        expression_result = ""
+        expression_result += "("
+        expression_result += self.type
+        for child in self.children:
+            expression_result += " " + child.__str__()
+        expression_result += ")"
+        return expression_result
+
 
 class CallExpression(StatementParse):
 
@@ -140,7 +156,7 @@ class MemberLocationParse(IdentifierParse):  # should have a type of memloc
         return expression_result
 
 
-class MemberParse(IdentifierParse):  # should have a type of varloc  (declare)
+class MemberParse(IdentifierParse):
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
 
@@ -148,16 +164,23 @@ class MemberParse(IdentifierParse):  # should have a type of varloc  (declare)
         result = self.value
         return result
 
-class ParameterParse(IdentifierParse):  # should have a type of varloc  (declare)
+class ParameterParse(IdentifierParse):
+    def __init__(self, value, index, type):
+        super().__init__(value, index, type)
+        self.value_type = "var"
+
+    def __str__(self):
+        result = self.value
+        return result
+
+class TypedParameterParse(IdentifierParse):
     def __init__(self, value, index, type):
         super().__init__(value, index, type)
         self.value_type = None
 
     def __str__(self):
-        if self.value_type is not None:
-            result = self.value_type + " " + self.value
-            return result
-        return self.value
+        result = self.value
+        return result
 
 class ProgramParse():
 
@@ -296,8 +319,11 @@ class Parser:
             return self.__parse_parameter(string, index)
         elif term == "typed_parameter":
             return self.__parse_typed_parameter(string, index)
+        elif term == "function_return_type":
+            return self.__function_return_type(string, index)
         else:
             raise AssertionError("Unexpected Term " + term)
+
 
     def __parse_operand(self, string, index):
         parse = self.__parse(string, index, "class")
@@ -1075,6 +1101,7 @@ class Parser:
         return while_statement
 
     def __parse_function(self, string, index):
+        is_params_typed, is_return_typed = False, False
         func_keyword = string[index:index + 4]
         if func_keyword != "func":  # if doesn't start with func then fail
             return self.FAIL
@@ -1089,6 +1116,9 @@ class Parser:
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
         params_parse = self.__parse(string, index, "parameters")  # parse program parameters
+        is_params_typed, function_param_types = self.__get_function_types(params_parse.children)  # get the function param types if exist
+        # if function_param_types:
+        #     is_function_typed = True
         index = params_parse.index
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -1096,6 +1126,10 @@ class Parser:
         if string[index] != ")":
             return self.FAIL  # check for close paren
         index += 1  # add one for paren
+        function_return_type = self.__parse(string, index, "function_return_type")
+        if function_return_type != self.FAIL:  # get the return type
+            is_return_typed = True
+            index = function_return_type.index
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
@@ -1116,17 +1150,50 @@ class Parser:
             return self.FAIL  # check for close curly brace
         index += 1  # add one for curly brace
         function_parse = StatementParse(index, "function")
+        if is_return_typed or is_params_typed:
+            all_typed_params = self.__get_all_types(function_param_types, function_return_type)  #add typing if exists
+            function_signature = FunctionSignature("signature")
+            function_signature.children = all_typed_params
+            function_parse.children.append(function_signature)
         function_parse.children.append(params_parse)  # add params to children
         function_parse.children.append(program_parse)  # add programs in funct to children
         return function_parse
+
+    # if len(all_typed_params) != 0 and params_parse.children != 0:
+    #     all_typed_params = ["var" for i in range(params_parse.children)]
+    #     all_typed_params.append(function_return_type.value)
+    # else:
+    #     all_typed_params.append(function_return_type.value)
+
+    def __get_all_types(self,function_param_types, function_return_type):
+        all_types = []
+        all_types += function_param_types
+        if function_return_type == self.FAIL:
+            all_types.append("var")
+            return all_types
+        all_types.append(function_return_type.value)
+        return all_types
+
+
+
+    def __function_return_type(self, string, index):
+        op_space = self.__parse(string, index, "op_space")  # parse optional space
+        if op_space != self.FAIL:
+            index = op_space.index  # add op_space to index
+        return_type = self.__parse(string, index, "return_type")
+        if return_type == self.FAIL:
+            return self.FAIL
+        index = return_type.index
+        return return_type
+
+        # parse for return type
 
     def __parse_parameters(self, string, index):
         all_parameters_parse = StatementParse(index, "parameters")  # decalre statement
         identifier_parse = self.__parse(string, index, "parameter")  # parse parameter
         if identifier_parse != self.FAIL:
             index = identifier_parse.index  # add indentifier to index
-            # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,
-            #                               "parameters")  # create param parse
+            # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters")  # param parse
             all_parameters_parse.children.append(identifier_parse)
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
@@ -1148,10 +1215,28 @@ class Parser:
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
-            # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,"parameters")  # create param parse
+            # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,"parameters")  # param parse
             all_parameters_parse.children.append(identifier_parse)  # add the identifier to args
         all_parameters_parse.index = index  # set param index to index
         return all_parameters_parse  # get all params and return
+
+    def __get_function_types(self, array_of_params):
+        default_types = ["var" for i in range(len(array_of_params))]
+        is_typed = False
+        array_of_types = []
+        for param in array_of_params:
+            array_of_types.append(param.value_type)
+            if isinstance(param, TypedParameterParse):
+                is_typed = True
+
+        if is_typed:
+            signature = FunctionSignature("parameters")
+            signature.children = array_of_types
+            return (True, array_of_types)
+
+        return (False, default_types)
+
+
 
     def __parse_optional_close_paren(self, string, index):
         parsed = ""
@@ -1351,7 +1436,7 @@ class Parser:
         op_space = self.__parse(string, index, "op_space")  # parse optional space
         if op_space != self.FAIL:
             index = op_space.index  # add op_space to index
-        type = self.__parse_type(string, index, "type")
+        type = self.__parse(string, index, "type")
         if type == self.FAIL:
             return self.FAIL
         return type
@@ -1364,7 +1449,7 @@ class Parser:
         identifier = self.__parse(string, index, "identifier")
         if identifier == self.FAIL:
             return self.FAIL
-        param_parse = ParametersParse(identifier.value, identifier.index,"parameters")  # create param parse
+        param_parse = ParameterParse(identifier.value, identifier.index, "parameters")  # create param parse
         return param_parse
 
 
@@ -1383,7 +1468,7 @@ class Parser:
         if identifier == self.FAIL:
             return self.FAIL
         index = identifier.index
-        typed_parameter = ParameterParse(identifier.value, index, "parameters")
+        typed_parameter = TypedParameterParse(identifier.value, index, "parameters")
         typed_parameter.value_type = type.value
         return typed_parameter
 
@@ -1396,7 +1481,7 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-var foo = func(int x,int y,int z){
+var foo = func(x, y, z) -> var {
 };
 
 # test for an arg mismatch when a memeber does not have this as a parameter
@@ -1404,7 +1489,7 @@ var foo = func(int x,int y,int z){
 
 
         print(term.__str__())
-        interpreter.execute(term)
+        # interpreter.execute(term)
 
         return term
 
