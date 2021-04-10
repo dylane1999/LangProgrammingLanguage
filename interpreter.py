@@ -1,6 +1,9 @@
 
 import sys
 
+# runtime error: type mismatch
+
+
 class InterpreterService:
     def __init__(self):
         self.environment = self.Environment({}, None)
@@ -36,6 +39,7 @@ class InterpreterService:
 
         def __init__(self, variable_map, previous_env):
             self.variable_map = variable_map
+            self.type_map = {}
             self.previous_env = previous_env
 
     def __push_env(self):
@@ -177,17 +181,40 @@ class InterpreterService:
 
     # (assign (memloc (varloc this) value) (lookup value))
     def __execute_declaration_statement(self, node):
+        type = "var"  # should be var if there is not type given
         # eval the value on left side
-        val_to_be_assigned = self.__eval(node.children[1])
-        # eval things on the right side of the equation
-        variable_name = node.children[0].value
-        # if item already in keys throw a already declared error
+        val_assigned_index = 1
+        var_name_index = 0
+        if len(node.children) > 2:  # change index and get type
+            val_assigned_index = 2
+            var_name_index = 1
+            type = node.children[0]
+        variable_name = node.children[var_name_index].value  # get the var name
+        val_to_be_assigned = self.__eval(node.children[val_assigned_index]) # eval the value
+        self.environment.type_map[variable_name] = type  # add the type to env
+        if type != "var":  # if not var check safety
+            self.__check_type_safety(variable_name, val_to_be_assigned)
+        # if var name already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
             self.output += "runtime error: variable already defined" + "\n"
             raise ValueError("runtime error: variable already defined")
         self.environment.variable_map[variable_name] = val_to_be_assigned
         # return
+
+    def __check_type_safety(self, var_name, value):
+        expected_type = self.environment.type_map[var_name]
+        actual_type = self.__get_type(value)
+        if expected_type != actual_type:
+            self.output += "runtime error: type mismatch" + "\n"
+            raise AssertionError("runtime error: type mismatch")
+        return
+
+    def __get_type(self, value):
+        if isinstance(value, int):
+            return "int"
+        if isinstance(value, self.Closure):
+            return "func"
 
     def __execute_if_statement(self, node):
         conditional = self.__eval(node.children[0])
