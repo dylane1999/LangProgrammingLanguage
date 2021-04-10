@@ -1,4 +1,3 @@
-
 import sys
 
 # runtime error: type mismatch
@@ -168,13 +167,15 @@ class InterpreterService:
 
     def __execute_assignment_statement(self, node):
         val_to_be_assigned = self.__eval(node.children[1])
-        x = self.__eval(node.children[0])
         lookup = node.children[0]  # get the lookup
+        var_name = lookup.value
         env = self.__eval(lookup)
-        if node.children[0].type == "memloc" and (lookup.value not in env.variable_map.keys()):
+        if node.children[0].type == "memloc" and (var_name not in env.variable_map.keys()):
             self.output += "runtime error: undefined member" + "\n"
             raise ValueError("runtime error: undefined member")
-        env.variable_map[lookup.value] = val_to_be_assigned  # set the var in the env = to the expression
+        # check the type safety
+        self.__check_type_safety(var_name, val_to_be_assigned, env)
+        env.variable_map[var_name] = val_to_be_assigned  # set the var in the env = to the expression
         # fails when assignig memloc node.left to temp,. it gets the temp env incorrectly
         # the prib is when its going to get the this, it gets the main env, not the node class env
         return
@@ -193,7 +194,7 @@ class InterpreterService:
         val_to_be_assigned = self.__eval(node.children[val_assigned_index]) # eval the value
         self.environment.type_map[variable_name] = type  # add the type to env
         if type != "var":  # if not var check safety
-            self.__check_type_safety(variable_name, val_to_be_assigned)
+            self.__check_type_safety(variable_name, val_to_be_assigned, self.environment)
         # if var name already in keys throw a already declared error
         declared_vars = self.environment.variable_map.keys()
         if variable_name in declared_vars:
@@ -202,8 +203,8 @@ class InterpreterService:
         self.environment.variable_map[variable_name] = val_to_be_assigned
         # return
 
-    def __check_type_safety(self, var_name, value):
-        expected_type = self.environment.type_map[var_name]
+    def __check_type_safety(self, var_name, value, env):
+        expected_type = env.type_map[var_name]
         actual_type = self.__get_type(value)
         if expected_type != actual_type:
             self.output += "runtime error: type mismatch" + "\n"
@@ -264,16 +265,25 @@ class InterpreterService:
         raise ValueError("runtime error: argument mismatch")
 
     def __eval_function(self, node):
+        is_typed = len(node.children) == 3
+        params_index = 0
+        program_index = 1
+        if is_typed:
+            signature = node.children[0]
+            params_index = 1
+            program_index = 2
         current_env = self.environment  # copy the current env
-        function_params = node.children[0].children
+        function_params = node.children[params_index].children
         contains_duplicates = self.__check_duplicate_args(function_params)
         if contains_duplicates:
             self.output += "runtime error: duplicate parameter" + "\n"
             raise ValueError("runtime error: duplicate parameter")
         params_array = []
+        types_array = signature.children
         for param in function_params:
             params_array.append(param.value)
         function_closure = self.Closure(node, current_env, params_array)
+        function_closure.types_array = types_array
         if self.definingMethod:
             self.__check_for_this(function_params)
             function_closure.isMethod = True
@@ -282,6 +292,7 @@ class InterpreterService:
     def __eval_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
         closure = self.__eval(node.children[0])
+        has_signature = len(closure.parse.children) == 3
         if closure is None:
             self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
@@ -308,17 +319,36 @@ class InterpreterService:
         if len(closure.parameters) != len(evaluated_args):
             self.output += "runtime error: argument mismatch" + "\n"
             raise ValueError("runtime error: argument mismatch")
+        # add the type to the env
         for i in range(len(closure.parameters)):
+            self.environment.type_map[closure.parameters[i]] = closure.types_array[i]  # add type to the env
+            self.__check_type_safety(closure.parameters[i], evaluated_args[i], self.environment)  # check if type safe
             self.environment.variable_map[closure.parameters[i]] = evaluated_args[i]
-        function_program = closure.parse.children[1]
+        program_index = 1
+        if has_signature:
+            program_index = 2
+        function_program = closure.parse.children[program_index]
         self.__execute(function_program)  # execute the IR tree of the function
         self.__pop_env()
         self.environment = current_env  # set the env back to the current env
+        # FIXME CHECK THE RETURN VASLUE
         return_value = self.return_value
         self.return_value = 0  # set return value back
         self.isReturning = False
         self.function_call_depth -= 1  # decrease function depth by one
+        if closure.types_array[-1] != "var":
+            self.__check_return_type_safety(closure.types_array[-1], return_value)  # check return type safety
         return return_value  # return 0 or the return value
+
+
+    def __check_return_type_safety(self, expected_type, value):
+        actual_type = self.__get_type(value)
+        if expected_type != actual_type:
+            self.output += "runtime error: type mismatch" + "\n"
+            raise AssertionError("runtime error: type mismatch")
+        return False
+
+
 
     def __eval_class(self, node):
         self.__push_env()
