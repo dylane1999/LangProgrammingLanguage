@@ -1488,14 +1488,14 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-int x = 1;
+func x = func(){};
 
 # test for an arg mismatch when a memeber does not have this as a parameter
 ''')
 
 
         print(term.__str__())
-        # interpreter.execute(term)
+        interpreter.execute(term)
 
         return term
 
