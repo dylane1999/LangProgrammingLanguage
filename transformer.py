@@ -149,8 +149,23 @@ class ConstantFoldingTransform:
             return self.mult_div_as_string(node)
         if node.type in "+-":
             return self.add_sub_as_string(node)
+        if isinstance(node, CallExpression):
+            return self.call_expression_as_string(node)
         return str(node.value)
     #create a get string as add minus
+
+    def call_expression_as_string(self, node):
+        result_string = ""
+        var_name = node.children[0].value
+        arguments = node.children[1].children
+        result_string += " " + var_name + "(" + " "
+        for arg in arguments:
+            result_string += arg.value + ", "
+        result_string += " )"
+        return result_string
+
+
+
 
     def mult_div_as_string(self, node):
         result_string = "("
@@ -265,17 +280,20 @@ class ConstantFoldingTransform:
         return node
 
     def flip_sign(self, node):
-        if node.type in '*/':
-            node = self.flip_mult_div_sign(node)
-            return node
         if isinstance(node, IntergerParse):
             node.value = node.value * -1
+            return node
+        if node.type in '*/':
+            node = self.flip_mult_div_sign(node)
             return node
         if node.type in "+-":
             if node.type == "+":
                 node = self.flip_add(node)
             elif node.type == "-":
                 node = self.flip_sub(node)
+            return node
+        if isinstance(node, CallExpression):
+            node.sign = "-"
             return node
         if node.value[0] == "-":
             node.value = node.value[1:]
@@ -339,6 +357,14 @@ class ConstantFoldingTransform:
         :return: True(+) or False(-)
         '''
         if node.type in "*/":
+            if hasattr(node, "sign"):
+                if node.sign == "-":
+                    return False
+                else:
+                    return True
+            else:
+                return True
+        if isinstance(node, CallExpression):
             if hasattr(node, "sign"):
                 if node.sign == "-":
                     return False
