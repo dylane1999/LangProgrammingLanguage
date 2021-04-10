@@ -774,10 +774,13 @@ class Parser:
         return assignment_parse
 
     def __parse_declaration_statement(self, string, index):
-        var = string[index:index + 3]  # check for var
-        if var != "var":
+        is_typed = False
+        type_key = self.__parse(string, index, "type")
+        if type_key == self.FAIL:
             return self.FAIL
-        index += 3  # skip to end of var
+        if type_key.value != "var":
+            is_typed = True
+        index = type_key.index # skip to end of var
         req_space = self.__parse(string, index, "req_space")  # parse the required one space or newline
         if req_space == self.FAIL:
             return self.FAIL
@@ -789,11 +792,15 @@ class Parser:
         variable = assignment_statement.children[0]  # get the variable from assignment
         expression = assignment_statement.children[1]  # get the expression from assignment (rhs)
         declaration_statement = StatementParse(index, "declare")
-        identifier = DeclareLocationParse(variable.value, variable.index,
-                                          variable.type)  # make var into identifier parse
+        if is_typed:
+            declaration_statement.children.append(type_key.value)
+        identifier = DeclareLocationParse(variable.value, variable.index, variable.type)  # make var into identifier parse
         declaration_statement.children.append(identifier)
         declaration_statement.children.append(expression)  # add variable & expression as children of declare statement
-        if self.__check_forbidden_names(declaration_statement.children[0].value):  # pass var name as arg
+        index_to_check = 0
+        if is_typed:
+            index_to_check += 1
+        if self.__check_forbidden_names(declaration_statement.children[index_to_check].value):  # pass var name as arg
             raise ValueError("syntax error")  # check for exceptions on variable name
         return declaration_statement
 
@@ -1481,8 +1488,7 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-var foo = func(x, y, z) -> var {
-};
+int x = 1;
 
 # test for an arg mismatch when a memeber does not have this as a parameter
 ''')
