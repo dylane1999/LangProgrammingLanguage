@@ -292,7 +292,6 @@ class InterpreterService:
     def __eval_call(self, node):
         self.function_call_depth += 1  # set current depth plus one
         closure = self.__eval(node.children[0])
-        has_signature = len(closure.parse.children) == 3
         if closure is None:
             self.output += "runtime error: undefined function" + "\n"
             raise ValueError("runtime error: undefined function")
@@ -305,6 +304,7 @@ class InterpreterService:
             return classInstance
         # if isinstance()
         # eval1 = self.__eval(node.children[0])
+        has_signature = len(closure.parse.children) == 3
         arguments = node.children[1].children
         evaluated_args = []
         if closure.isMethod or ("this" in closure.parameters):

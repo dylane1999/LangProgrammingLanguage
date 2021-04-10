@@ -1488,11 +1488,10 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-func foo = func(int x){ print 1; };
-var x = 1;
-foo(x);
 
-# test for an arg mismatch when a memeber does not have this as a parameter
+# fold independent of runtime errors
+var x = 2;
+print 2 - 2 - x();
 ''')
 
 
