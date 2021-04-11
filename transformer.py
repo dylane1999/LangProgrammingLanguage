@@ -149,6 +149,8 @@ class ConstantFoldingTransform:
             return self.mult_div_as_string(node)
         if node.type in "+-":
             return self.add_sub_as_string(node)
+        if node.type == "function":
+            return self.function_as_string(node)
         if isinstance(node, CallExpression):
             return self.call_expression_as_string(node)
         return str(node.value)
@@ -164,7 +166,23 @@ class ConstantFoldingTransform:
         result_string += " )"
         return result_string
 
-
+    def function_as_string(self, node):
+        result_string = "func( "
+        paramaters = node.children[0].children
+        for param in paramaters:
+            result_string += param.value + ", "
+        result_string += " ) { \n"
+        program = node.children[1].children
+        #firt simplify each line
+        program = self.visit(program)
+        for term in program:
+            program_subset = ProgramParse(0, "sequence")
+            program_subset.children.append(term)
+            transformed_subset = self.visit(program_subset)
+            transformed_term = transformed_subset.children[0]
+            result_string += self.get_child_as_string(transformed_term) + ";  \n "
+        result_string += "}"
+        return result_string
 
 
     def mult_div_as_string(self, node):
