@@ -279,7 +279,9 @@ class InterpreterService:
             self.output += "runtime error: duplicate parameter" + "\n"
             raise ValueError("runtime error: duplicate parameter")
         params_array = []
-        types_array = signature.children
+        types_array = ["var" for i in range(len(function_params))]
+        if is_typed:
+            types_array = signature.children
         for param in function_params:
             params_array.append(param.value)
         function_closure = self.Closure(node, current_env, params_array)

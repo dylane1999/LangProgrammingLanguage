@@ -1488,10 +1488,12 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
+# functions are also non-constants
+5 - 2 * func(n){6/3+n;} + 1;
+# 6/3+n;
+# 
+# (+ (/ 6 3) (lookup n))
 
-# fold independent of runtime errors
-var x = 2;
-print 2 - 2 - x();
 ''')
 
 
