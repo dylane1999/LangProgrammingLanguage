@@ -205,6 +205,8 @@ class InterpreterService:
 
     def __check_type_safety(self, var_name, value, env):
         expected_type = env.type_map[var_name]
+        if expected_type == "var":
+            return
         actual_type = self.__get_type(value)
         if expected_type != actual_type:
             self.output += "runtime error: type mismatch" + "\n"
@@ -338,7 +340,7 @@ class InterpreterService:
         self.return_value = 0  # set return value back
         self.isReturning = False
         self.function_call_depth -= 1  # decrease function depth by one
-        if closure.types_array[-1] != "var":
+        if len(closure.types_array) != 0 and closure.types_array[-1] != "var":
             self.__check_return_type_safety(closure.types_array[-1], return_value)  # check return type safety
         return return_value  # return 0 or the return value
 
