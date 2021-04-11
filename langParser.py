@@ -1488,11 +1488,17 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# functions are also non-constants
-5 - 2 * func(n){6/3+n;} + 1;
-# 6/3+n;
-# 
-# (+ (/ 6 3) (lookup n))
+# tests for ability to call several nested functions together
+var func1 = func(){
+        var func2 = func(){
+            var func3 = func(){
+            print 4;
+            };
+        ret func3;
+    };
+    ret func2;
+};
+func1()()();
 
 ''')
 
