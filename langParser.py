@@ -1488,17 +1488,15 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# tests for ability to call several nested functions together
-var func1 = func(){
-        var func2 = func(){
-            var func3 = func(){
-            print 4;
-            };
-        ret func3;
-    };
-    ret func2;
+# battle of errors 2: div by zero\\'s revenge
+var x = func(a, b){
+ ret a/b;
 };
-func1()()();
+var one = 1;
+var zero = 0;
+x(x(1,0));
+
+
 
 ''')
 

@@ -314,15 +314,15 @@ class InterpreterService:
         if closure.isMethod or ("this" in closure.parameters):
             # FIXME look for the parent/ add the methods's env
             evaluated_args.append(closure.environment)  # if a closure, append the class instance for the "this"
+        # check that the len of closure params and call args are the same
+        if len(closure.parameters) != len(arguments):
+            self.output += "runtime error: argument mismatch" + "\n"
+            raise ValueError("runtime error: argument mismatch")
         for arg in arguments:
             evaluated_args.append(self.__eval(arg))
         current_env = self.environment
         self.environment = closure.environment  # set the current env to the closure env
         self.__push_env()  # push a new env on stack
-        # check that the len of closure params and call args are the same
-        if len(closure.parameters) != len(evaluated_args):
-            self.output += "runtime error: argument mismatch" + "\n"
-            raise ValueError("runtime error: argument mismatch")
         # add the type to the env
         for i in range(len(closure.parameters)):
             self.environment.type_map[closure.parameters[i]] = closure.types_array[i]  # add type to the env
@@ -523,7 +523,9 @@ class InterpreterService:
 
     def __eval_or_statement(self, node):
         lhs = self.__eval(node.children[0])
+        if lhs:
+            return True
         rhs = self.__eval(node.children[1])
-        if lhs or rhs:
+        if rhs:
             return True
         return False
