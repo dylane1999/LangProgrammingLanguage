@@ -1488,13 +1488,25 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# battle of errors 2: div by zero\\'s revenge
-var x = func(a, b){
- ret a/b;
+# tests functions in comparisons
+var x = func(y){
+	ret y;
 };
-var one = 1;
-var zero = 0;
-x(x(1,0));
+if(x == x(x)){
+	print 1;
+}
+else{
+	print 0;
+}
+if(x == 1){
+	print 2;
+}
+if(x != 1){
+	print 3;
+}
+if(x < 1){
+	print 4;
+}
 
 
 

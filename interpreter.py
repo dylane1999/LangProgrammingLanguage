@@ -489,20 +489,31 @@ class InterpreterService:
     def __eval_less_than(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
+        self.__check_comparison_allowed(lhs)
+        self.__check_comparison_allowed(rhs)
         if lhs < rhs:
             return True
         return False
 
     def __eval_greater_than(self, node):
         lhs = self.__eval(node.children[0])
+        self.__check_comparison_allowed(lhs)
         rhs = self.__eval(node.children[1])
+        self.__check_comparison_allowed(rhs)
         if lhs > rhs:
             return True
         return False
 
+    def __check_comparison_allowed(self, node):
+        if isinstance(node, self.Closure):
+            self.output += "runtime error: math operation on functions" + "\n"
+            raise ValueError("runtime error: math operation on functions")
+
     def __eval_less_than_equal(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
+        self.__check_comparison_allowed(lhs)
+        self.__check_comparison_allowed(rhs)
         if lhs <= rhs:
             return True
         return False
@@ -510,6 +521,8 @@ class InterpreterService:
     def __eval_greater_than_equal(self, node):
         lhs = self.__eval(node.children[0])
         rhs = self.__eval(node.children[1])
+        self.__check_comparison_allowed(lhs)
+        self.__check_comparison_allowed(rhs)
         if lhs >= rhs:
             return True
         return False
