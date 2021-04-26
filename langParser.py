@@ -666,6 +666,9 @@ class Parser:
         if operand.type == "function":
             return True
         parsed = ""
+        # POSSIBLE FIXME
+        if isinstance(operand, StatementParse):
+            return True
         string = operand.value
         if (not string[0].isalpha()) and (string[0] != "_"):  # if string is not a letter and string not a _
             return False
@@ -1412,7 +1415,10 @@ class Parser:
                 parent.children.append(member_parse)
                 lhs = parent
                 continue
-            parent = CallExpression(index, "call", operand_parse.value)
+            value = operand_parse
+            if not isinstance(operand_parse, StatementParse):
+                value = operand_parse.value
+            parent = CallExpression(index, "call", value)
             parent.children.append(lhs)
             parent.children.append(call_parse)  # add the function arguments
             lhs = parent
@@ -1488,25 +1494,9 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# tests functions in comparisons
-var x = func(y){
-	ret y;
-};
-if(x == x(x)){
-	print 1;
-}
-else{
-	print 0;
-}
-if(x == 1){
-	print 2;
-}
-if(x != 1){
-	print 3;
-}
-if(x < 1){
-	print 4;
-}
+# another error that can disappear - calling nonfunctions
+((0-4)-(2-a)+6)();
+
 
 
 

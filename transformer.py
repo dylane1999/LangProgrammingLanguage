@@ -22,7 +22,7 @@ class ConstantFoldingTransform:
             return node
         children = []
         for child in node.children:
-            if isinstance(child, StatementParse):
+            if isinstance(child, StatementParse) or isinstance(child, ProgramParse):
                 child = self.visit(child)
                 if not self.is_add_sub(node) and self.is_add_sub(child):
                     child = self.add_sub_transform(child)
@@ -43,6 +43,11 @@ class ConstantFoldingTransform:
             child_two = self.expand(node.children[1])
             if isinstance(child_one, IntergerParse) and isinstance(child_two, IntergerParse):
                 simple_add = child_one.value + child_two.value
+                if simple_add < 0:
+                    new_statement = StatementParse(0, "-")
+                    new_statement.children.append(IntergerParse(0, 0))
+                    new_statement.children.append(IntergerParse(simple_add * -1, 0))
+                    return new_statement
                 return IntergerParse(simple_add, 0)
             new_statement = self.arrange_terms(child_one, child_two)
             if new_statement is not None:
