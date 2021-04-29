@@ -172,11 +172,12 @@ class ConstantFoldingTransform:
         return result_string
 
     def function_as_string(self, node):
-        result_string = "func( "
+        result_string = "func("
         paramaters = node.children[0].children
         for param in paramaters:
-            result_string += param.value + ", "
-        result_string += " ) { \n"
+            result_string += param.value + ","
+        result_string = result_string.rstrip(result_string[-1])
+        result_string += ") { \n"
         program = node.children[1].children
         #firt simplify each line
         program = self.visit(program)

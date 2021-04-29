@@ -1199,8 +1199,10 @@ class Parser:
         # parse for return type
 
     def __parse_parameters(self, string, index):
+        params_as_string = " "
         all_parameters_parse = StatementParse(index, "parameters")  # decalre statement
         identifier_parse = self.__parse(string, index, "parameter")  # parse parameter
+        # params_as_string += identifier_parse.value
         if identifier_parse != self.FAIL:
             index = identifier_parse.index  # add indentifier to index
             # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters")  # param parse
@@ -1213,6 +1215,7 @@ class Parser:
             if string[index] != ",":  # if no , break
                 parse = self.FAIL
                 break
+            params_as_string += ","
             index += 1  # add one for ,
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
@@ -1221,12 +1224,16 @@ class Parser:
             if identifier_parse == self.FAIL:
                 parse = self.FAIL
                 break
+            params_as_string += identifier_parse.value
             index = identifier_parse.index  # add identifier to index
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
             # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,"parameters")  # param parse
             all_parameters_parse.children.append(identifier_parse)  # add the identifier to args
+        # check if the statement ends in a comma
+        if params_as_string[-1] == ",":
+            return self.FAIL
         all_parameters_parse.index = index  # set param index to index
         return all_parameters_parse  # get all params and return
 
@@ -1494,8 +1501,8 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# another error that can disappear - calling nonfunctions
-((0-4)-(2-a)+6)();
+# functions are also non-constants
+5 - 2 * func(n){6/3+n;} + 1;
 
 
 

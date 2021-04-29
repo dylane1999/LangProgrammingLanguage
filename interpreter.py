@@ -306,13 +306,10 @@ class InterpreterService:
             # declare a class instance
             classInstance = self.ClassInstance(closure.parse, closure.environment, node.func_name)
             return classInstance
-        # if isinstance()
-        # eval1 = self.__eval(node.children[0])
         has_signature = len(closure.parse.children) == 3
         arguments = node.children[1].children
         evaluated_args = []
-        if closure.isMethod or ("this" in closure.parameters):
-            # FIXME look for the parent/ add the methods's env
+        if closure.isMethod: #or ("this" in closure.parameters):  #FIXME this can be in a normal function
             evaluated_args.append(closure.environment)  # if a closure, append the class instance for the "this"
         # check that the len of closure params and call args are the same
         if len(closure.parameters) != len(arguments):
@@ -335,7 +332,6 @@ class InterpreterService:
         self.__execute(function_program)  # execute the IR tree of the function
         self.__pop_env()
         self.environment = current_env  # set the env back to the current env
-        # FIXME CHECK THE RETURN VASLUE
         return_value = self.return_value
         self.return_value = 0  # set return value back
         self.isReturning = False
