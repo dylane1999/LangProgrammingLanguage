@@ -450,12 +450,14 @@ class Parser:
         :param index:
         :return: Parse of add|sub expression
         '''
+        shell_of_expression_as_string = " "
         space_parse = self.__parse(string, index, "op_space")  # parse spaces
         if space_parse != self.FAIL:
             index = space_parse.index
         left_parse = self.__parse(string, index, "mult|div")  # parses the mult expression (if no expression returns int
         if left_parse == self.FAIL:
             return self.FAIL
+        shell_of_expression_as_string += str(left_parse)
         index = left_parse.index
         parent = None  # declare parent
         parse = None  # declare parse to fail test
@@ -467,6 +469,7 @@ class Parser:
             if operator == self.FAIL:
                 parse = self.FAIL
                 break
+            shell_of_expression_as_string += operator.value
             index += 1  # add one for +/-
             space_parse = self.__parse(string, index, "op_space")  # parse spaces
             if space_parse != self.FAIL:
@@ -476,11 +479,15 @@ class Parser:
             if right_parse == self.FAIL:  # if operand was fail break
                 parse = self.FAIL
                 break
+            shell_of_expression_as_string += str(right_parse)
             index = right_parse.index
             parent = StatementParse(index, operator.value)
             parent.children.append(left_parse)  # add right/left parse
             parent.children.append(right_parse)
             left_parse = parent  # set left parse to parent
+        #check if expression ends with operator
+        if shell_of_expression_as_string[-1] in "+-*/":
+            return self.FAIL
         if parent is None:
             return left_parse  # if there was no expression return the left operand
         parent.index = index
@@ -1199,8 +1206,10 @@ class Parser:
         # parse for return type
 
     def __parse_parameters(self, string, index):
+        params_as_string = " "
         all_parameters_parse = StatementParse(index, "parameters")  # decalre statement
         identifier_parse = self.__parse(string, index, "parameter")  # parse parameter
+        # params_as_string += identifier_parse.value
         if identifier_parse != self.FAIL:
             index = identifier_parse.index  # add indentifier to index
             # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index, "parameters")  # param parse
@@ -1213,6 +1222,7 @@ class Parser:
             if string[index] != ",":  # if no , break
                 parse = self.FAIL
                 break
+            params_as_string += ","
             index += 1  # add one for ,
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
@@ -1221,12 +1231,16 @@ class Parser:
             if identifier_parse == self.FAIL:
                 parse = self.FAIL
                 break
+            params_as_string += identifier_parse.value
             index = identifier_parse.index  # add identifier to index
             op_space = self.__parse(string, index, "op_space")  # parse optional space
             if op_space != self.FAIL:
                 index = op_space.index  # add op_space to index
             # param_parse = ParametersParse(identifier_parse.value, identifier_parse.index,"parameters")  # param parse
             all_parameters_parse.children.append(identifier_parse)  # add the identifier to args
+        # check if the statement ends in a comma
+        if params_as_string[-1] == ",":
+            return self.FAIL
         all_parameters_parse.index = index  # set param index to index
         return all_parameters_parse  # get all params and return
 
@@ -1494,9 +1508,8 @@ class Parser:
         sys.setrecursionlimit(10 ** 6)
         term = parser.parse('''
 
-# another error that can disappear - calling nonfunctions
-((0-4)-(2-a)+6)();
-
+print 2+3+;
+# print invalid add expression, should result in an error
 
 
 
