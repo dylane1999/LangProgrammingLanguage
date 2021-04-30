@@ -1,0 +1,4 @@
+# permutation when both terms are negative
+var i = 27;
+print (2 * 3 - 16) - i;
+

@@ -1,0 +1,7 @@
+# making sure the right value is calculated in transform
+var printer = func(b){
+    if(b == 14){
+        print b;
+    }
+};
+printer(2*7+1-1);

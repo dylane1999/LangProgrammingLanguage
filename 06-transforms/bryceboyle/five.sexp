@@ -1,0 +1,1 @@
+(sequence (declare num 5) (print (+ (+ (- 2 (- (+ 3 4) 6)) (lookup num)) (- 9 1))))

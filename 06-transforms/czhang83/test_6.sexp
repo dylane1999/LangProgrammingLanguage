@@ -1,0 +1,1 @@
+(sequence (declare a 4) (print (- (- 3 (- (lookup a) 4)) (+ (lookup a) 4))) (print (- (- 3 (* (lookup a) 4)) (* 3 4))) (print (- (- 3 (* 4 (lookup a))) (/ 4 4))))

@@ -1,0 +1,21 @@
+#testing for weird spacing with folding intact
+
+
+
+
+
+
+print   1   + 
+
+
+
+                                    1 
+                                    
+                                    
+                                    
+                                    
+                                    + 
+            1
+
+
+;

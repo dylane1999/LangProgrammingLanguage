@@ -1,0 +1,8 @@
+# moves integer to the front of the expression, and then back to the back.
+
+var a = 0;
+var b = ((0-a)-(a-3));
+var c = ((0-a)-(a-3))+a;
+
+#also reorder these variables (only bring b up, not c)
+print (0-a)+b+c;

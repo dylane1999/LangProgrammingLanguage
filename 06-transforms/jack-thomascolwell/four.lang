@@ -1,0 +1,2 @@
+# Tests that division by zero is not folded but some folding can still occur
+(1+2)/0;

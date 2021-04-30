@@ -1,0 +1,1 @@
+(sequence (if 7 (sequence (print 7))) (declare x 0) (while (+ (lookup x) 7) (sequence (print 7) (assign (varloc x) (- 0 7)))))

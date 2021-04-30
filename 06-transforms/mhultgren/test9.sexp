@@ -1,0 +1,1 @@
+(sequence (declare n 3) (declare k 10) (print (+ (* (* (lookup n) 2) (+ 3 4)) (lookup k))))

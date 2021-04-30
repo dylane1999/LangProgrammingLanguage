@@ -1,0 +1,2 @@
+# make sure that transforms are done correctly when mixing multiplication and division with addition and subtraction
+print 5 * (4 - 2) + 1 * 0;

@@ -1,0 +1,5 @@
+(sequence
+    (print 0)
+    (declare x 2)
+    (print (- (* 1 (lookup x)) 2))
+)

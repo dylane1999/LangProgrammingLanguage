@@ -1,0 +1,1 @@
+(sequence (declare i 3) (declare p 3) (declare h 3) (print (+ (- (- (- 1 (lookup i)) (lookup h)) 5) (lookup p))))

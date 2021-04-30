@@ -1,0 +1,2 @@
+# Tests basic constant folding for only constants under all operations
+1+(2*3)/6-((2+3)*5);

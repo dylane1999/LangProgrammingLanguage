@@ -1,0 +1,3 @@
+# i equivalent to i+0
+var i =3;
+print 3 * 5 + 5 + i - 20;

@@ -1,0 +1,1 @@
+(sequence (declare a 4) (print (- (- 0 (lookup a)) 7)))

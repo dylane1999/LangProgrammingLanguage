@@ -1,0 +1,2 @@
+# does not fold 1/0
+print 2 + 3 + (1 / 0);

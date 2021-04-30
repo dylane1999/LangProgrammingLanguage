@@ -1,0 +1,4 @@
+        var i = 3;
+        print 1-(12-(i*2)-32-(i-3)+43-(12*i));
+        
+        # ability to perform chain and flip the sign of the chain and get correct value

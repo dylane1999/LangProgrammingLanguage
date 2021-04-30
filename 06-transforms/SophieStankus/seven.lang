@@ -1,0 +1,3 @@
+# if terms equal 0 they are eliminated
+var x = 10;
+print x - 5 + 5;

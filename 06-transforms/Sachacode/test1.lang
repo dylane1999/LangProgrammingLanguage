@@ -1,0 +1,3 @@
+#testing folding with a variable and subtraction
+var x = 1;
+print 1 + x - 2;

@@ -1,0 +1,4 @@
+var hat = func(cat){
+    ret 1 + cat + 2 - 3 * cat;
+};
+print hat(2);

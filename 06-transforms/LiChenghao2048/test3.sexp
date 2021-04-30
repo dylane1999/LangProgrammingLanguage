@@ -1,0 +1,1 @@
+(sequence (declare x 2) (print (<= (- (+ (* 1 2) 3) 4) (- (+ (* 1 (lookup x)) 3) 4))))

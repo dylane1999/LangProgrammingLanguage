@@ -1,0 +1,2 @@
+# tests most basic fold 
+print 10 + 10;

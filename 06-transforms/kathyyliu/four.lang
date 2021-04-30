@@ -1,0 +1,9 @@
+# fold both sides of comp expression
+
+var x = 1;
+if ((1+4/2) >= (x-(1+3*x))) {      # 3 >= -3
+    print 1;
+}
+else {
+    print 0;
+}

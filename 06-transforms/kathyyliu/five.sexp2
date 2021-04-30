@@ -1,0 +1,4 @@
+(sequence
+    (declare x 2)
+    (print (- 0 (call (lookup x) (arguments))))
+)

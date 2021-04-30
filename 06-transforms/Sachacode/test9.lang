@@ -1,0 +1,3 @@
+#test many obtuse folding results
+var x = 0;
+print (x - 1 + 1) * (1 - 1 - x) * (0 - 1 - x);

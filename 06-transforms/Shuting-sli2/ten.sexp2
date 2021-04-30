@@ -1,0 +1,1 @@
+(sequence (declare i 2) (ifelse (> (- (- (lookup i) (* 2 (lookup i))) 1) 5) (sequence (print 1)) (sequence (print 0))))

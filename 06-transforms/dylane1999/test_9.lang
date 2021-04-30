@@ -1,0 +1,6 @@
+        var i = 3;
+        var p = 3;
+        var h = 3;
+        print 1-i-h-5+p;
+        
+        # check that p will be moved up first because it is positive

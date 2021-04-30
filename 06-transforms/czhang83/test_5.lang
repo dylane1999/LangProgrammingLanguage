@@ -1,0 +1,4 @@
+# insert zero to the front when all transformed nodes are negative
+
+var a = 4;
+print 0 - 3 - 4 - a;

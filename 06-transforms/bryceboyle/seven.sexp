@@ -1,0 +1,1 @@
+(sequence (declare noodle1 1) (declare noodle2 2) (print (+ (+ 2 (* 2 (lookup noodle1))) (* (/ 6 2) (lookup noodle2)))))

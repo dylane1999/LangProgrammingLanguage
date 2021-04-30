@@ -1,0 +1,4 @@
+# no error since math operations disappear. Makes sure you're actually using the new parse
+
+var empty = func(){};
+print 3+empty-3;

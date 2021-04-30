@@ -1,0 +1,1 @@
+(sequence (declare i 2) (declare j 1) (print (+ (* (* (lookup i) 99) 36) (lookup j))))

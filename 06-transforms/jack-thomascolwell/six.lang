@@ -1,0 +1,3 @@
+# Tests that folding occurs for nested nodes even if the outer expression cannot be nested
+var x = 3;
+x*(1+2+3);

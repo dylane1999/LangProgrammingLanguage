@@ -1,0 +1,6 @@
+# test rearranging negative values after moving constants to the end in transform
+var shark = 5;
+var squid = 9;
+var crab = 1;
+
+print 6 - squid + crab + 4 - shark;

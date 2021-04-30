@@ -1,0 +1,4 @@
+        var i = 3;
+        print 1-1-i;
+        
+        # check for negative number handling

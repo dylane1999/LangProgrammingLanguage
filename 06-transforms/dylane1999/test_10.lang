@@ -1,0 +1,4 @@
+        var i = 3;
+        print i+20-20;
+        
+        # check that zeros added will be droppped

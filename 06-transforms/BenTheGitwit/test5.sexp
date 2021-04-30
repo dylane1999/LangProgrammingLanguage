@@ -1,0 +1,1 @@
+( sequence ( declare empty ( function ( parameters ) ( sequence ) ) ) ( print ( - ( + 3 ( lookup empty ) ) 3 ) ) )

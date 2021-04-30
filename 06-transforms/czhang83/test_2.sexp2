@@ -1,0 +1,1 @@
+(sequence (declare a 3) (declare b 4) (print (+ (+ (lookup a) (lookup b)) 3)))

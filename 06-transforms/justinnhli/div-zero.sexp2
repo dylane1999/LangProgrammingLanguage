@@ -1,0 +1,6 @@
+(sequence
+    (print (/ 24 0))
+    (print (/ 4 0))
+    (print (/ 4 0))
+    (print (/ 4 0))
+    (print (/ (/ (/ (/ 24 0) 1) 2) 3)))

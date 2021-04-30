@@ -1,0 +1,1 @@
+( sequence ( print ( * 3 ( - 0 4 ) ) ) ( print ( / 10 ( - 3 5 ) ) ) )

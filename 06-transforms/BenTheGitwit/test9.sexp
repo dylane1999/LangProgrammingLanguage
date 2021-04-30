@@ -1,0 +1,1 @@
+( sequence ( declare a ( call ( call ( function ( parameters ) ( sequence ( print 5 ) ) ) ( arguments ( + ( - ( - 0 4 ) ( - 2 ( lookup a ) ) ) 6 ) ) ) ( arguments ) ) ) )

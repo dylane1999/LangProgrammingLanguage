@@ -1,0 +1,2 @@
+# Tests basic constant folding for only constants under */
+1*2/3;

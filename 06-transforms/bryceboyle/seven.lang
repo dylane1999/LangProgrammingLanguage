@@ -1,0 +1,4 @@
+# testing math operations with multiplication and division for variables
+var noodle1 = 1;
+var noodle2 = 2;
+print 2 + 2 * noodle1 + 6 / 2 * noodle2;

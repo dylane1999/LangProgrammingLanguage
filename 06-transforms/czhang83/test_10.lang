@@ -1,0 +1,7 @@
+# divide by zero
+
+var a = 4;
+print a / 0;
+print 4 / 0;
+print 3 + (a / 0);
+print 3 + (4 / 0);

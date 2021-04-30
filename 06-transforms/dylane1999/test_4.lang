@@ -1,0 +1,4 @@
+        var i = 3;
+        print 12-(i+2)-32-(i-3)+43-(12-i);
+        
+        # check for correct sign flip and constant combination in a long add/sub chain

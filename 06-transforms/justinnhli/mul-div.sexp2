@@ -1,0 +1,7 @@
+(sequence
+    (declare a 3628800)
+    (print (lookup a))
+    (declare b (/ (/ (/ (/ (/ (/ (/ (/ (/ (/ (lookup a) 10) 9) 8) 7) 6) 5) 4) 3) 2) 1))
+    (print (lookup b)) 
+    (declare c 1)
+    (print (lookup c)))

@@ -1,0 +1,2 @@
+# empty after collapsing, should add a zero
+print 0 + 0;

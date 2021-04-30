@@ -1,0 +1,2 @@
+# folds md if int
+print 3 * 2;

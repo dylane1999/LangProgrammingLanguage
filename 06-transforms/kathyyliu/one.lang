@@ -1,0 +1,5 @@
+# muldiv only fold if both children are int
+
+print 1 * 2 + 1 - 3;
+var x = 2;
+print 1 * x + 1 - 3;

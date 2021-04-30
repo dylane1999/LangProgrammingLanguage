@@ -1,0 +1,1 @@
+(sequence (declare i 72) (if (== (/ (lookup i) 24) 3) (sequence (print (lookup i)))))

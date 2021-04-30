@@ -1,0 +1,7 @@
+# another error that can disappear - calling nonfunctions
+
+var a = func(){
+	print 5;
+};
+
+((0-4)-(2-a)+6)();

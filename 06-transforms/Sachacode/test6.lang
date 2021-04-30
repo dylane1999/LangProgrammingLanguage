@@ -1,0 +1,2 @@
+#testing for a fold containing a divion by 0
+print 2 / 1 / 0;

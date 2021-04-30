@@ -1,0 +1,9 @@
+# I accidentally left out a semicolon when I first wrote 
+# the last test and it broke my exec_call function.
+# Maybe not the best fit for transforms but good to check
+
+var a = func(){
+	print 5;
+}
+
+((0-4)-(2-a)+6)();

@@ -1,0 +1,2 @@
+(sequence
+    (print 24))

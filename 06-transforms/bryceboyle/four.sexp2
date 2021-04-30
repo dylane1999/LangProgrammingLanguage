@@ -1,0 +1,1 @@
+(sequence (declare shark 5) (declare squid 9) (declare crab 1) (print (+ (- (- (lookup crab) (lookup squid)) (lookup shark)) 10)))

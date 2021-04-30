@@ -1,0 +1,9 @@
+# Tests that folding occurs within control blocks and conditions
+if (1+(2*3)) {
+  print (1+(2*3));
+}
+var x = 0;
+while (x+1+(2*3)) {
+  print (1+(2*3));
+  x = 0-7;
+}

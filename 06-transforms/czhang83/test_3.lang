@@ -1,0 +1,4 @@
+# nested add sub nodes will be transformed
+
+var a = 3;
+print a + ((3 + 4) * ((5 + 6) + a));

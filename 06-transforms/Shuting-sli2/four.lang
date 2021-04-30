@@ -1,0 +1,3 @@
+# the IR doesn't allow for -i
+var i = 100;
+print 10 - i - 10;

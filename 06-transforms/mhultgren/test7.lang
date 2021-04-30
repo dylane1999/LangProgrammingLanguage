@@ -1,0 +1,6 @@
+# test transform inside conditional
+var i = 72;
+
+if (i / (12 + 12) == 3) {
+    print i;
+}

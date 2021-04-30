@@ -1,0 +1,5 @@
+# divisors after var not folded
+
+var x = 2;
+print 160 / 2 / 2 / x / 5 / 2 / 1;
+print 160 / x / 2 / x / 5 / 2 / 1;

@@ -1,0 +1,1 @@
+(sequence (declare x 33) (print (* (- (+ 11 (* 12 13)) 10) (lookup x))))

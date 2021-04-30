@@ -1,0 +1,4 @@
+# if mostly variables, just move constants 
+var x = 10;
+var y = 1;
+print x + 1 + (5 * y);

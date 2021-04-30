@@ -1,0 +1,6 @@
+(sequence
+    (declare x 1)
+    (ifelse (>= 3 (- (- (lookup x) (* 3 (lookup x))) 1)) 
+        (sequence (print 1))
+        (sequence (print 0)))
+)

@@ -1,0 +1,5 @@
+# test multiplication & division folding
+var n = 3;
+var k = 10;
+
+print n * 2 * (3 + 4) + k;

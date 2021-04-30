@@ -1,0 +1,1 @@
+(sequence (declare x 3) (print (- (- 0 (lookup x)) 5)))

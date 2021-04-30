@@ -1,0 +1,7 @@
+# checks folding inside function
+var x = func() {
+  var y = 5;
+  var z = 10;
+  print y * 5 * (5 + 5) + z;
+};
+x();

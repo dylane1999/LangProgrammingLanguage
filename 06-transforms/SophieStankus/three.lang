@@ -1,0 +1,3 @@
+# tests with add and sub 
+var x = 5;
+print (10 - x) + 10;

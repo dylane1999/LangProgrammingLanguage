@@ -1,0 +1,4 @@
+var x = 3;
+print 1-2-(x+4);
+
+# negative output

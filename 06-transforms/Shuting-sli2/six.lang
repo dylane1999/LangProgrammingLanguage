@@ -1,0 +1,3 @@
+# move constant to the end
+var i = 18;
+print 3 + i;

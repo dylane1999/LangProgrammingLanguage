@@ -1,0 +1,1 @@
+( sequence ( declare a 3 ) ( - ( - ( - 3 ( lookup a ) ) ( + 4 ( lookup a ) ) ) ( + 3 ( + ( lookup a ) 9 ) ) ) )

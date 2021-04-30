@@ -1,0 +1,5 @@
+# Tests that folding is done within function bodies and arguments
+var x = func (a){
+  print (a+1+(2*3));
+};
+x(1+(2*3));

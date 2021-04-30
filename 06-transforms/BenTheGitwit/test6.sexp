@@ -1,0 +1,1 @@
+( sequence ( declare a 0 ) ( declare b ( - ( - 0 ( lookup a ) ) ( - ( lookup a ) 3 ) ) ) ( declare c ( + ( - ( - 0 ( lookup a ) ) ( - ( lookup a ) 3 ) ) ( lookup a ) ) ) ( print ( + ( + ( - 0 ( lookup a ) ) ( lookup b ) ) ( lookup c ) ) ) )

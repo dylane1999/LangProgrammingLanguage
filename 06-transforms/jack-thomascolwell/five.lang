@@ -1,0 +1,3 @@
+# Tests that multiplications with variables are not simplified
+var x = 1;
+1+(2*x);

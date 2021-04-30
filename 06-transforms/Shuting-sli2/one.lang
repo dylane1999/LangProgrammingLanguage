@@ -1,0 +1,3 @@
+# only transform the code if both children are ints
+var a = 100;
+print 2* a * 10;

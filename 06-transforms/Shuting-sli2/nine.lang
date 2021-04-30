@@ -1,0 +1,6 @@
+# test in a loop
+var i = 2;
+while (i < 10){
+	i = 3 + i - 1;
+}
+print i;

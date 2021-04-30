@@ -1,0 +1,4 @@
+(sequence
+    (declare x 2)
+    (print (+ (- (- (lookup x) (lookup x)) (* (lookup x) 2)) 7))
+)

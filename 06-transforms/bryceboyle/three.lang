@@ -1,0 +1,6 @@
+# making sure that variables end up in the right order after transform with addition/ subtraction of constants
+var num_apples = 2;
+var num_oranges = 8;
+print 5 + num_oranges - 3 - num_apples;
+
+print num_oranges - num_apples + 2;

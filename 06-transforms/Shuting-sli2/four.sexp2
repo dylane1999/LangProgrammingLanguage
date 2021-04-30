@@ -1,0 +1,1 @@
+(sequence (declare i 100) (print (- 0 (lookup i))))

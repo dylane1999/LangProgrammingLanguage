@@ -1,0 +1,3 @@
+# does not fold MD if not integers
+var x = 10;
+print 1 + (2 * x);
